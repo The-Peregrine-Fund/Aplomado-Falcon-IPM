@@ -1,22 +1,22 @@
 #########################################
 # Set the working drive to science drive
 ##############################
-path.df<- data.frame(PCs=NA, Path=NA)
-path.df[1,] <- c("rolek.brian", "S:\\")
-path.df[2,] <- c("brianrolek", "/run/user/1002/gvfs/smb-share:server=pfsbs,share=science/")
-path.df[3,] <- c("cmcclure", "S:\\")
-path.df[4,] <- c("nutting", "C:\\Dropbox\\R\\")
-path.df[5,] <- c("user", "C:\\Dropbox\\R\\")
-ind<- which(path.df$PCs==Sys.info()["user"])
-if (any(path.df$PCs==Sys.info()["user"])){ # check PC is in df path.df
-  setwd(path.df$Path[ind]) # if TRUE, set path from df
-}  else {}
-rm(list=c("path.df", "ind"))
-setwd("APFA_IPM")
-getwd()
-
-load("Data\\final-data.Rdata")
-#load("/scratch/brolek/aplo_ipm/data/final-data.Rdata")
+# path.df<- data.frame(PCs=NA, Path=NA)
+# path.df[1,] <- c("rolek.brian", "S:\\")
+# path.df[2,] <- c("brianrolek", "/run/user/1002/gvfs/smb-share:server=pfsbs,share=science/")
+# path.df[3,] <- c("cmcclure", "S:\\")
+# path.df[4,] <- c("nutting", "C:\\Dropbox\\R\\")
+# path.df[5,] <- c("user", "C:\\Dropbox\\R\\")
+# ind<- which(path.df$PCs==Sys.info()["user"])
+# if (any(path.df$PCs==Sys.info()["user"])){ # check PC is in df path.df
+#   setwd(path.df$Path[ind]) # if TRUE, set path from df
+# }  else {}
+# rm(list=c("path.df", "ind"))
+# setwd("APFA_IPM")
+# getwd()
+# 
+# load("Data\\final-data.Rdata")
+load("/scratch/brolek/aplo_ipm/data/final-data.Rdata")
 #load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\Data\\final-data.Rdata")
 m<- c("ipm7-reduced-em-nim")
 
@@ -96,12 +96,12 @@ code <- nimbleCode(
     sigma.em ~ dunif(0,10)
     for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, sd=sigma.prod)  } #j
 
-    l.omegaB ~ T(dnorm(0, 0.01), , 3) # upper limit of 20 imm per breeder to help run model
-    l.omegaF ~ T(dnorm(0, 0.01), , 3) # upper limit of 20 imm per nonbreeder to help run model
+    l.omegaB ~ T(dnorm(0, sd=100), , 3) # upper limit of 20 imm per breeder to help run model
+    l.omegaF ~ T(dnorm(0, sd=100), , 3) # upper limit of 20 imm per nonbreeder to help run model
     l.mu.em <- logit(mu.em)
     mu.em ~ dunif(0,1)
     for (m in 1:2){
-    l.mu.F[m] ~ T(dnorm(0, 0.01), , 3) # limits to help run model
+    l.mu.F[m] ~ T(dnorm(0, sd=100), , 3) # limits to help run model
     sigma.F[m] ~ dunif(0,10)
     } # m
     
@@ -399,6 +399,19 @@ TFmat <- is.na(z.inits) & is.na(datl$z)
 for (i in 1:dim(TFmat)[1]){  TFmat[i,1:f[i]] <- FALSE }
 z.inits[TFmat] <- sample(size=445, c(2,3), replace=T, prob=c(0.5, 0.5) ) 
 
+N <- rbind( 
+                  array(rpois(9*datl$n.yr, lambda=5), dim=c(9, datl$n.yr) ),
+                  array(rpois(5*datl$n.yr, lambda=0.1), dim=c(5, datl$n.yr) ) )
+
+NB <- N[3,] + N[5,] + N[7,] + N[9,] + N[10,] - N[12,] # number of breeders
+NF <- N[2,] + N[4,] + N[6,] + N[8,] + N[11,] - N[13,] # number of nonbreeders
+NJ <- N[1,] + datl$aug - N[14,] # number of first years
+
+prod <- rep(NA, length(datl$prod))
+prod[is.na(datl$prod[datl$prod])] <- rpois(length(prod[is.na(datl$prod[datl$prod])]), 1)
+prod.mu <- array(NA, dim=c(datl$n.yr, datl$n.ter))
+prod.mu[] <- rpois(datl$n.yr*datl$n.ter, mean(datl$prod, na.rm=T))
+
 inits <- function(){list(z = z.inits,
                          JSalpha1 = runif(2), 
                          FSalpha1 = runif(1),  
@@ -409,8 +422,8 @@ inits <- function(){list(z = z.inits,
                          mu.pF1 = runif(2),
                          mu.pB1 = runif(2),
                          l.mu.F = runif(2),
-                         l.omegaB = runif(-5, 0), 
-                         l.omegaF = runif(-5, 0),
+                         l.omegaB = runif(1, -5, 0), 
+                         l.omegaF = runif(1, -5, 0),
                          sigma.prod = runif(1),
                          sigma.F = c(0.01, 0.01),
                          sigma.JS.s = runif(2), 
@@ -427,20 +440,20 @@ inits <- function(){list(z = z.inits,
                          sigma.omegaB = runif(1), 
                          sigma.omegaF = runif(1), 
                          sigma.em = runif(1),
-                         NB = datl$countBM,
-                         NF = datl$countFM,
-                         NJ = datl$countJM,
+                         NB = NB,
+                         NF = NF,
+                         NJ = NJ,
                          r= runif(1, 0.01, 0.1),
                          mu.em = runif(1, 0.01, 0.1),
                          eps.FS.s= runif(datl$n.yr, -1, 1),
                          eps.BS.s= runif(datl$n.yr, -1, 1),
-                         eps.JS.s= array(runif(2*datl$n.yr, -1, 1), dim=c(2,datl$n.yr)), 
+                         eps.JS.s= array(runif(2*datl$n.yr, -1, 1), dim=c(2,datl$n.yr)),
                          eps.BFR.psi= runif(datl$n.yr, -1, 1),
-                         eps.FBR.psi= array(runif(2*2*datl$n.yr, -1, 1), dim=c(2,2,datl$n.yr)), 
+                         eps.FBR.psi= array(runif(2*2*datl$n.yr, -1, 1), dim=c(2,2,datl$n.yr)),
                          eps.JBR.psi= array(runif(2*datl$n.yr, -1, 1), dim=c(2,datl$n.yr)),
                          eps.pB= runif(datl$n.yr, -1, 1),
-                         eps.pF= runif(datl$n.yr, -1, 1), 
-                         eps.F= runif(datl$n.yr, -1, 1), 
+                         eps.pF= runif(datl$n.yr, -1, 1),
+                         eps.F= runif(datl$n.yr, -1, 1),
                          eps.prod= runif(datl$n.ter, -1, 1),
                          eps.omegaB= runif(datl$n.yr-1, -1, 1),
                          eps.omegaF= runif(datl$n.yr-1, -1, 1),
@@ -462,7 +475,9 @@ inits <- function(){list(z = z.inits,
                          eta.JBRalpha= array(runif(datl$n.yr*2), dim=c(2,datl$n.yr)),
                          eta.pB= runif(datl$n.yr),
                          eta.pF= runif(datl$n.yr),
-                         N= array(rpois(13*datl$n.yr, lambda=5), dim=c(13, datl$n.yr) )
+                         N=N,
+                         prod=prod,
+                         prod.mu=prod.mu
 )} 
 
 params <- c(
@@ -482,12 +497,12 @@ params <- c(
               "NB", "NF", "NJ", "NE", "NI", "N", "Ntot"
 )
 
-constl <- datl[ c(2,3,4,17,24,25) ] 
-datl2 <- datl[ c(1,5,6,12,13,16,20,21,22,23,26,27)  ]
+constl <- datl[ c(2,3,4,5,6,17,20,22,23, 24,25, 26 ) ] 
+datl2 <- datl[ c(1,12,13,16,21,27)  ]
 # MCMC settings
 ni <- 200000; nt <- 50; nb <- 100000; nc <- 3; na <- 1000
 ni <- 10000; nt <- 5; nb <- 5000; nc <- 3; na <- 1000
-#ni <- 50; nt <- 1; nb <- 25; nc <- 1; na <- 10
+ni <- 200; nt <- 1; nb <- 100; nc <- 3; na <- 10
 mod<- nimbleModel(code, calculate=T, constants = constl, 
                   data = datl2, inits = inits())
 mod$initializeInfo()
@@ -516,7 +531,7 @@ out <- nimbleMCMC(  model= mod,
                     samples=T )
 
 #save(file=paste("/scratch/brolek/aplo_ipm/modeloutputs/", m, ".Rdata", sep=""), list="out")
-save(file=paste("Analysis\\NIMBLE results\\", m, ".Rdata", sep=""), list="out")
+save(file=paste("aplo_ipm\\modeloutputs\\", m, ".Rdata", sep=""), list="out")
 
 
 # change MCMC sampler to 
