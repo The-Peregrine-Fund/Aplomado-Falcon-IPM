@@ -4,7 +4,10 @@ author: "Brian W. Rolek"
 date: "April 19, 2021"
 output:
   html_document:
-    toc: TRUE 
+    df_print: paged
+    toc: yes
+  github_document:
+    toc: yes
 ---
 
 ```{r setup, include=FALSE, error=TRUE}
