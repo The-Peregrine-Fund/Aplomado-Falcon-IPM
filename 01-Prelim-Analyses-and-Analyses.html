@@ -197,11 +197,22 @@ summary {
 </ul></li>
 <li><a href="#implementation-of-the-global-cjs-survival-model">2. Implementation of the Global CJS Survival Model</a><ul>
 <li><a href="#jags-and-r-code-for-implementing-the-global-cjs-survival-model">2.1 JAGS and R Code for Implementing the Global CJS Survival Model</a></li>
-<li><a href="#postprocess-global-model">2.2 Postprocess Global Model</a></li>
-<li><a href="#the-importance-of-covariates-in-the-global-cjs-survival-model">2.3 The Importance of Covariates in the Global CJS Survival Model</a></li>
+<li><a href="#postprocess-global-model">2.2 Postprocess Global Model</a><ul>
+<li><a href="#functions-to-summarize-posterior-distritbutions">2.2.1 Functions to Summarize Posterior Distritbutions</a></li>
+<li><a href="#calculate-differences-between-groups">2.2.2 Calculate Differences Between Groups</a></li>
+<li><a href="#the-importance-of-covariates-in-the-global-cjs-survival-model">2.2.3 The Importance of Covariates in the Global CJS Survival Model</a></li>
+<li><a href="#the-importance-of-emigration">2.2.4 The Importance of Emigration</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#implementation-of-the-cjs-survival-model-with-reduced-covariates">3. Implementation of the CJS Survival Model with Reduced Covariates</a><ul>
 <li><a href="#jags-and-r-code-for-the-cjs-survival-model-with-reduced-covariates">3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates</a></li>
+</ul></li>
+<li><a href="#implementation-of-the-integrated-population-model-with-immigration">4. Implementation of the Integrated Population Model with Immigration</a><ul>
+<li><a href="#formulation-of-the-ipm-with-immigration">4.1 Formulation of the IPM with Immigration</a></li>
+<li><a href="#jags-and-r-code-for-the-ipm-with-immigration">4.2 JAGS and R Code for the IPM with Immigration</a></li>
+</ul></li>
+<li><a href="#implementation-of-the-integrated-population-model-without-immigration">5. Implementation of the Integrated Population Model without Immigration</a><ul>
+<li><a href="#jags-and-r-code-for-the-ipm-without-immigration">5.1 JAGS and R Code for the IPM without Immigration</a></li>
 </ul></li>
 </ul>
 </div>
@@ -270,11 +281,11 @@ Observed states (1--5, columns left to right):<br />
 <h1>2. Implementation of the Global CJS Survival Model</h1>
 <div id="jags-and-r-code-for-implementing-the-global-cjs-survival-model" class="section level2">
 <h2>2.1 JAGS and R Code for Implementing the Global CJS Survival Model</h2>
-<pre class="r"><code># Must have JAGS installed to run this code
+<pre class="r"><code># JAGS must be installed on your computer
 library (jagsUI)
-load(&quot;.//data//final-data.Rdata&quot;)
-m&lt;- c(&quot;surv7-jags-global&quot;) # name for files
-modfl &lt;- paste( m, &quot;.txt&quot;, sep=&quot;&quot;)
+load(&quot;./data/final-data.Rdata&quot;)
+m&lt;- c(&quot;surv7-jags-global&quot;)
+modfl &lt;- paste(&quot;./&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
 
 sink(modfl)
 cat(&quot;
@@ -547,13 +558,16 @@ params &lt;- c(
 # MCMC settings
 # ni &lt;- 200000; nt &lt;- 100; nb &lt;- 100000; nc &lt;- 3; na &lt;- 10000 # actual run # takes about 1 week on a high performance computer
 ni &lt;- 10000; nt &lt;- 1; nb &lt;- 5000; nc &lt;- 1; na &lt;- 100 # time-saving run, but inadequate for convergence
-out &lt;- jags(datl, inits, params, modfl, n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, parallel=T, module=c(&quot;glm&quot;, &quot;bugs&quot;))
-
+out &lt;- jags(datl, inits, params, modfl,  
+            n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
+            parallel=T, module=c(&quot;glm&quot;, &quot;bugs&quot;))
 save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&quot;out&quot;)</code></pre>
 </div>
 <div id="postprocess-global-model" class="section level2">
 <h2>2.2 Postprocess Global Model</h2>
 <p>We postprocess the output from JAGS to compare sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.</p>
+<div id="functions-to-summarize-posterior-distritbutions" class="section level3">
+<h3>2.2.1 Functions to Summarize Posterior Distritbutions</h3>
 <pre class="r"><code>library (jagsUI)
 library (ggplot2)
 library (gridExtra)
@@ -580,6 +594,9 @@ data_summary &lt;- function(x) {
   ymax &lt;- HDIofMCMC(x, credMass=0.95)[[2]]
   return(c(y=m,ymin=ymin,ymax=ymax))
 }</code></pre>
+</div>
+<div id="calculate-differences-between-groups" class="section level3">
+<h3>2.2.2 Calculate Differences Between Groups</h3>
 <p>We load the results from the global model to assess which covariates had important effects on parameters.</p>
 <pre class="r"><code>load(&quot;C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\surv7-jags-global.Rdata&quot;)
 
@@ -716,8 +733,8 @@ ests$important &lt;- ifelse((ests$LHDI_95 &gt;= 0 &amp; ests$UHDI_95&gt;=0) |
                          (ests$LHDI_95 &lt;= 0 &amp; ests$UHDI_95&lt;=0), 
                          &quot;yes&quot;, &quot;no&quot;) </code></pre>
 </div>
-<div id="the-importance-of-covariates-in-the-global-cjs-survival-model" class="section level2">
-<h2>2.3 The Importance of Covariates in the Global CJS Survival Model</h2>
+<div id="the-importance-of-covariates-in-the-global-cjs-survival-model" class="section level3">
+<h3>2.2.3 The Importance of Covariates in the Global CJS Survival Model</h3>
 <p>We plot the differences in survival, recruitment, and resight probabilities and evaluate their importance when 85% highest density intervals did not intersect zero.</p>
 <pre class="r"><code>print(ests)</code></pre>
 <pre><code>##                     median LHDI_95 UHDI_95       param important
@@ -784,16 +801,34 @@ Fig SX. Violin plots of differences in survival, recruitment, and recapture esti
 </p>
 </div>
 </div>
+<div id="the-importance-of-emigration" class="section level3">
+<h3>2.2.4 The Importance of Emigration</h3>
+<pre class="r"><code>hist(out$sims.list$em, main=&quot;Histogram of Emigration&quot;, xlab=&quot;Posterior draws of emigration&quot;)
+abline(v=median(out$sims.list$em), lwd=2)
+abline(v=HDIofMCMC(out$sims.list$em, cred=0.95), lty=2, lwd=2)</code></pre>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted." width="576" />
+<p class="caption">
+Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted.
+</p>
+</div>
+<pre class="r"><code>median(out$sims.list$em)</code></pre>
+<pre><code>## [1] 0.0003720285</code></pre>
+<pre class="r"><code>HDIofMCMC(out$sims.list$em, cred=0.95)</code></pre>
+<pre><code>## [1] 1.067261e-07 1.562396e-03</code></pre>
+</div>
+</div>
 </div>
 <div id="implementation-of-the-cjs-survival-model-with-reduced-covariates" class="section level1">
 <h1>3. Implementation of the CJS Survival Model with Reduced Covariates</h1>
 <div id="jags-and-r-code-for-the-cjs-survival-model-with-reduced-covariates" class="section level2">
 <h2>3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates</h2>
 <p>We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates that were not important.</p>
-<pre class="r"><code>library (jagsUI)
-load(&quot;.//data//final-data.Rdata&quot;)
+<pre class="r"><code># JAGS must be installed on your computer
+library (jagsUI)
+load(&quot;./data/final-data.Rdata&quot;)
 m&lt;- c(&quot;surv7-jags-reduced&quot;)
-modfl &lt;- paste(&quot;.//&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
+modfl &lt;- paste(&quot;./&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
 sink(modfl)
 cat(&quot;
     model{
@@ -1073,6 +1108,680 @@ out &lt;- jags(datl, inits, params, modfl,
             n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
             parallel=T, module=c(&quot;glm&quot;, &quot;bugs&quot;))
 save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&quot;out&quot;)</code></pre>
+</div>
+</div>
+<div id="implementation-of-the-integrated-population-model-with-immigration" class="section level1">
+<h1>4. Implementation of the Integrated Population Model with Immigration</h1>
+<p>We specify the IPM including observation and state trasition matices for the survival submodel in the manuscript. These matrices are identical for IPMs with and without immigration.</p>
+<div id="formulation-of-the-ipm-with-immigration" class="section level2">
+<h2>4.1 Formulation of the IPM with Immigration</h2>
+<p>This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate (<span class="math inline">\(\omega\)</span>) for nonbreeders and breeders separately. The number of immigrants (<span class="math inline">\(N_{t+1}^{I}\)</span>) was specified as</p>
+<p><span class="math display">\[N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega_{t})\]</span> <span class="math display">\[log(\omega_{t})=\mu^{\omega}+\epsilon_{t}^{\omega}\]</span> <span class="math display">\[\epsilon_{t}^{\omega} \sim {\sf normal} (0,\sigma^{\omega})\]</span> We did not include immigration of first-year birds because they must be recruited as breeders or nonbreeders during the following post-breeding survey.</p>
+</div>
+<div id="jags-and-r-code-for-the-ipm-with-immigration" class="section level2">
+<h2>4.2 JAGS and R Code for the IPM with Immigration</h2>
+<pre class="r"><code>#################################
+# The model
+################################
+sink(&quot;Analysis/JAGS models/IPM_reduced_imm_fecfix_effort_reform.txt&quot;)
+cat(&quot;
+    model{
+    ####################################################
+    ####################################################
+    # DATA
+    # Counts
+    #  log counts of breeders = l.countBM
+    #  log counts of floaters (nonbreeders) = l.countFM
+    #  log counts of first year = l.countJM
+    # Survival
+    # Observations (O) = y  
+    # 1 seen Juvenile
+    # 2 seen Floater (nonbreeder)
+    # 3 seen Breeder
+    # 4 not seen
+    # States (S)
+    # 1 alive Juvenile
+    # 2 alive Floater (nonbreeder)
+    # 3 alive Breeder
+    # 4 dead
+    # Groups
+    # 1 wild born
+    # 2 hacked
+    # Sex
+    # 1 Female
+    # 2 Male
+    # Effort
+    # 1 Low
+    # 2 High
+    # Productivity = prod
+    ###################################################
+    # PARAMETERS
+    # F: fecundity
+    # phiJ: survival probability First Year (juvenile)
+    # phiF: survival probability floaters (nonbreeders)
+    # phiB: survival probability breeders
+    # psiJB: movement probability from First Year (juvenile) to Breeder
+    # psiFB: movement probability from Floater (nonbreeders) to Breeder
+    # psiBF: movement probability from Breeder to Floater (nonbreeders) 
+    # pJ: resight probability First Year (juvenile)
+    # pF: resight probability Floater (nonbreeders)
+    # pB: resight probability Breeder
+    ###################################################
+
+    ##############
+    # Priors and constraints
+    ##############
+    # Counts for first year are known with certainty
+    N[1,1] &lt;- 0 # Wild born juvs
+    N[2,1] &lt;- 0 # Juvs to nonbreeder
+    N[3,1] &lt;- 0  # Juvs to breeders
+    N[4,1] &lt;- 0  # Nonbreeder wild to nonbreeder
+    N[5,1] &lt;- 0  # Nonbreeder wild to breeders
+    N[6,1] &lt;- 0  # Breeders to nonbreeder
+    N[7,1] &lt;- 0  # Breeders to breeders
+    N[8,1] &lt;- 0  # Wild juvs
+    N[9,1] &lt;- 0  # Nonbreeder hacked to nonbreeder
+    N[10,1] &lt;- 0  # Nonbreeder hacked to breeder
+    F[1] &lt;- 0 # No breeding first year, all hacked birds
+
+    sigma.BM ~ dunif(0,10)
+    sigma.FM ~ dunif(0,10) 
+    sigma.JM ~ dunif(0,10) 
+    sigma.prod ~ dunif(0,10)
+    sigma.omegaB ~ dunif(0,10)
+    sigma.omegaF ~ dunif(0,10)
+    
+    tau.BM &lt;- 1/(sigma.BM*sigma.BM)
+    tau.FM &lt;- 1/(sigma.FM*sigma.FM)
+    tau.JM &lt;- 1/(sigma.JM*sigma.JM)    
+    tau.omegaB &lt;- 1/(sigma.omegaB*sigma.omegaB)
+    tau.omegaF &lt;- 1/(sigma.omegaF*sigma.omegaF)
+    for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, tau.prod)  } #j
+    tau.prod &lt;- 1/(sigma.prod*sigma.prod)
+
+    l.omegaB ~ dnorm(0, 0.01)I(-7 ,2.5) # upper limit of 20 imm per breeder to help run model
+    l.omegaF ~ dnorm(0, 0.01)I(-7 ,2.5) # upper limit of 20 imm per nonbreeder to help run model
+
+  for (m in 1:2){
+    l.mu.F[m] ~ dnorm(0, 0.01)I(-7,2.5) # limits to help run model
+    tau.F[m] &lt;-  1/(sigma.F[m]*sigma.F[m])
+    sigma.F[m] ~ dunif(0,10)
+  } # m
+    
+    # Survival loops for demographic categories by sex, hacked, effort 
+    tau.FS.phi &lt;- 1/(sigma.FS.phi*sigma.FS.phi)
+    sigma.FS.phi ~ dunif(0,10)
+    FSalpha &lt;- logit(FSalpha1)
+    FSalpha1 ~ dunif(0, 1)
+    
+    tau.BS.phi &lt;- 1/(sigma.BS.phi*sigma.BS.phi)
+    sigma.BS.phi ~ dunif(0,10)
+    BSalpha &lt;- logit(BSalpha1) 
+    BSalpha1 ~ dunif(0, 1)
+    
+    tau.BFR.psi &lt;- 1/(sigma.BFR.psi*sigma.BFR.psi)
+    sigma.BFR.psi ~ dunif(0,10)
+    BFRalpha &lt;- logit(BFRalpha1)
+    BFRalpha1 ~ dunif(0, 1)
+    
+    tau.pB &lt;- 1/(sigma.pB*sigma.pB)
+    sigma.pB ~ dunif(0,10)
+
+for (k in 1:2){
+    mu.pB[k]&lt;- logit(mu.pB1[k])
+    mu.pB1[k] ~ dunif(0, 1)
+} # k
+
+    for (t in 1:(n.yr-1)){
+    logit(eta.FSalpha[t]) &lt;- FSalpha + eps.FS.phi[t]
+    eps.FS.phi[t] ~ dnorm(0, tau.FS.phi)
+    
+    logit(eta.BSalpha[t]) &lt;- BSalpha + eps.BS.phi[t]
+    eps.BS.phi[t] ~ dnorm(0, tau.BS.phi)    
+    
+    logit(eta.BFRalpha[t]) &lt;- BFRalpha + eps.BFR.psi[t]
+    eps.BFR.psi[t] ~ dnorm(0, tau.BFR.psi)
+
+    logit(eta.pB[t]) &lt;- mu.pB[effort[t]] + eps.pB[t]
+    eps.pB[t] ~ dnorm(0, tau.pB)
+    } #t
+    
+    for(s in 1:2){
+    tau.JS.phi[s] &lt;- 1/(sigma.JS.phi[s]*sigma.JS.phi[s])
+    sigma.JS.phi[s] ~ dunif(0,10)
+    JSalpha[s] &lt;- logit(JSalpha1[s]) 
+    JSalpha1[s] ~ dunif(0, 1)
+    
+    tau.JBR.psi[s] &lt;- 1/(sigma.JBR.psi[s]*sigma.JBR.psi[s])
+    sigma.JBR.psi[s] ~ dunif(0,10)
+    JBRalpha[s] &lt;- logit(JBRalpha1[s]) 
+    JBRalpha1[s] ~ dunif(0, 1)
+    
+    for (t in 1:(n.yr-1)){
+    logit(eta.JSalpha[s,t]) &lt;- JSalpha[s] + eps.JS.phi[s,t]
+    eps.JS.phi[s,t] ~ dnorm(0, tau.JS.phi[s])
+    
+    logit(eta.JBRalpha[s,t]) &lt;- JBRalpha[s] + eps.JBR.psi[s,t]
+    eps.JBR.psi[s,t] ~ dnorm(0, tau.JBR.psi[s])
+    } #t
+    
+    for (h in 1:2){
+    tau.FBR.psi[s,h] &lt;- 1/(sigma.FBR.psi[s,h]*sigma.FBR.psi[s,h])
+    sigma.FBR.psi[s,h] ~ dunif(0,10)
+    FBRalpha[s,h] &lt;- logit(FBRalpha1[s,h])
+    FBRalpha1[s,h] ~ dunif(0, 1)
+    
+    for (t in 1:(n.yr-1)){
+    logit(eta.FBRalpha[s,h,t]) &lt;- FBRalpha[s,h] + eps.FBR.psi[s,h,t]
+    eps.FBR.psi[s,h,t] ~ dnorm(0, tau.FBR.psi[s,h])
+    } #t
+    } } #h #s
+    
+    for (h in 1:2){
+    tau.pF[h] &lt;- 1/(sigma.pF[h]*sigma.pF[h])
+    sigma.pF[h] ~ dunif(0,10)
+    for (k in 1:2){
+    mu.pF[k,h] &lt;- logit(mu.pF1[k,h])
+    mu.pF1[k,h] ~ dunif(0,1)
+} # k
+
+    for (t in 1:(n.yr-1)){
+    logit(eta.pF[h,t]) &lt;- mu.pF[effort[t], h] + eps.pF[h,t]
+    eps.pF[h,t] ~ dnorm(0, tau.pF[h])
+    }} #t #h
+    
+    #######################
+    # Derived params
+    #######################
+for (t in 2:(n.yr-1)){    
+    lambda[t] &lt;-  Ntot[t+1]/(Ntot[t])
+    loglambda[t] &lt;- log(lambda[t])
+} #t
+
+    ###############################
+    # Likelihood for productivity
+    ###############################
+for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
+for (t in 3:(n.yr-1)){ 
+  for (j in 1:n.ter){
+    log(prod.mu[t,j]) &lt;- log(F[t]) + eps.prod[j] # link productivity to fecundity
+    } # j
+} # n.yr
+for (t in 1:(n.yr-1)){ 
+    log(F[t+1]) &lt;- l.mu.F[manage[t+1]] + eps.F[t+1]
+    eps.F[t+1] ~ dnorm (0, tau.F[manage[t+1]])
+    ################################
+    # Likelihood for immigration
+    ###############################
+    log(omegaB[t+1]) &lt;-  l.omegaB + eps.omegaB[t+1] # breeder
+    log(omegaF[t+1]) &lt;- l.omegaF + eps.omegaF[t+1] # nonbreeder
+    eps.omegaB[t+1] ~ dnorm(0, tau.omegaB)
+    eps.omegaF[t+1] ~ dnorm(0, tau.omegaF)
+    ################################
+    # Likelihood for counts
+    ################################
+    # Number of wild born juvs
+    N[1,t+1] ~ dpois( (NJ[t]*eta.JSalpha[2,t]*eta.JBRalpha[2,t] + # first year males to breeders
+                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
+                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
+                      NB[t]*eta.BSalpha[t]*(1-eta.BFRalpha[t]) )* # breeders to breeders
+                      F[t+1]/2) 
+    # first year to nonbreeder adults
+    N[2,t+1] ~ dbin(eta.JSalpha[2,t]*(1-eta.JBRalpha[2,t]), NJ[t] )
+    # first year to breeders
+    N[3,t+1] ~ dbin(eta.JSalpha[2,t]*eta.JBRalpha[2,t], NJ[t] )
+    # Nonbreeder male wild adults to nonbreeder adults
+    N[4,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,1,t]), NF[t] )
+    # Nonbreeder male wild adults to breeders
+    N[5,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,1,t], NF[t] )
+    # Breeders to nonbreeder adults
+    N[6,t+1] ~ dbin(eta.BSalpha[t]*(eta.BFRalpha[t]), NB[t] )
+    # Breeders to breeders
+    N[7,t+1] ~ dbin(eta.BSalpha[t]*(1-eta.BFRalpha[t]), NB[t] )    
+    # Nonbreeder hacked adults to nonbreeder adults
+    N[8,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,2,t]), NF[t] )
+    # Nonbreeder hacked adults to breeders
+    N[9,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,2,t], NF[t] )
+    # Immigrants to breeders
+    N[10,t+1] ~ dpois(NB[t]*omegaB[t+1])
+    # Immigrants to nonbreeders
+    N[11,t+1] ~ dpois(NF[t]*omegaF[t+1])
+    } # t
+    
+    for (t in 1:n.yr){
+    Ntot[t] &lt;- sum(N[c(1,2,3,4,5,6,7,8,9,10,11),t]) + aug[t] # total number
+    NB[t] &lt;-  sum(N[c(3,5,7,9,10),t]) # number of breeders
+    NF[t] &lt;-  sum(N[c(2,4,6,8,11),t]) # number of nonbreeders
+    NJ[t] &lt;-  N[1,t] + aug[t] # number of first years
+    } # t
+    
+# Observation process    
+    for (t in 2:n.yr){
+    l.countBM[t] ~ dnorm(log(NB[t]), tau.BM) # breeding males
+    l.countFM[t] ~ dnorm(log(NF[t]), tau.FM) # nonbreeding adult males
+    l.countJM[t] ~ dnorm(log(NJ[t]), tau.JM) # first year males
+} # t
+    
+    ################################
+    # Likelihood for survival
+    ################################
+    for (i in 1:nind){
+    for (t in 1:(n.yr-1)){
+    #Survival
+    phiJ[i,t] &lt;- eta.JSalpha[sex[i],t] # first year
+    phiF[i,t] &lt;- eta.FSalpha[t] # nonbreeder
+    phiB[i,t] &lt;- eta.BSalpha[t] # breeder
+    #Recruitment
+    psiJB[i,t] &lt;- eta.JBRalpha[sex[i],t] # first year to breeder
+    psiFB[i,t] &lt;- eta.FBRalpha[sex[i], hacked[i],t] # nonbreederto breeder
+    psiBF[i,t] &lt;- eta.BFRalpha[t] # breeder to nonbreeder
+    #Re-encounter
+    pF[i,t] &lt;- eta.pF[hacked[i],t] # resight of nonbreeders
+    pB[i,t] &lt;- eta.pB[t]  # resight of breeders
+    }#t
+    }#i
+    
+    # Define state-transition and observation matrices
+    for (i in 1:nind){  
+    # Define probabilities of state S(t+1) given S(t)
+    for (t in first[i]:(n.yr-1)){
+    ps[1,i,t,1] &lt;- 0
+    ps[1,i,t,2] &lt;- phiJ[i,t] * (1-psiJB[i,t])
+    ps[1,i,t,3] &lt;- phiJ[i,t] * psiJB[i,t]
+    ps[1,i,t,4] &lt;- 1-phiJ[i,t]
+    
+    ps[2,i,t,1] &lt;- 0
+    ps[2,i,t,2] &lt;- phiF[i,t] * (1-psiFB[i,t])
+    ps[2,i,t,3] &lt;- phiF[i,t] * psiFB[i,t]
+    ps[2,i,t,4] &lt;- 1-phiF[i,t]
+    
+    ps[3,i,t,1] &lt;- 0
+    ps[3,i,t,2] &lt;- phiB[i,t] * psiBF[i,t]
+    ps[3,i,t,3] &lt;- phiB[i,t] * (1-psiBF[i,t])
+    ps[3,i,t,4] &lt;- 1-phiB[i,t]
+    
+    ps[4,i,t,1] &lt;- 0
+    ps[4,i,t,2] &lt;- 0
+    ps[4,i,t,3] &lt;- 0
+    ps[4,i,t,4] &lt;- 1
+    
+    # Define probabilities of O(t) given S(t)
+    po[1,i,t,1] &lt;- 1 
+    po[1,i,t,2] &lt;- 0
+    po[1,i,t,3] &lt;- 0
+    po[1,i,t,4] &lt;- 0
+    
+    po[2,i,t,1] &lt;- 0
+    po[2,i,t,2] &lt;- pF[i,t]
+    po[2,i,t,3] &lt;- 0
+    po[2,i,t,4] &lt;- 1-pF[i,t]
+    
+    po[3,i,t,1] &lt;- 0
+    po[3,i,t,2] &lt;- 0
+    po[3,i,t,3] &lt;- pB[i,t]
+    po[3,i,t,4] &lt;- 1-pB[i,t]
+    
+    po[4,i,t,1] &lt;- 0
+    po[4,i,t,2] &lt;- 0
+    po[4,i,t,3] &lt;- 0
+    po[4,i,t,4] &lt;- 1
+    } #t
+    } #i
+    
+    # Likelihood 
+    for (i in 1:nind){
+    # Define latent state at first capture
+    z[i,first[i]] &lt;- y[i,first[i]]
+    for (t in (first[i]+1):n.yr){
+    # State process: draw S(t) given S(t-1)
+    z[i,t] ~ dcat(ps[z[i,t-1], i, t-1,1:4])
+    # Observation process: draw O(t) given S(t)
+    y[i,t] ~ dcat(po[z[i,t], i, t-1,1:4])
+    } #t
+    } #i
+    
+    } #model
+    &quot;,fill = TRUE)
+sink()</code></pre>
+</div>
+</div>
+<div id="implementation-of-the-integrated-population-model-without-immigration" class="section level1">
+<h1>5. Implementation of the Integrated Population Model without Immigration</h1>
+<div id="jags-and-r-code-for-the-ipm-without-immigration" class="section level2">
+<h2>5.1 JAGS and R Code for the IPM without Immigration</h2>
+<pre class="r"><code>#########################################
+# Set the working drive to science drive
+##############################
+path.df&lt;- data.frame(PCs=NA, Path=NA)
+path.df[1,] &lt;- c(&quot;rolek.brian&quot;, &quot;S:\\&quot;)
+path.df[2,] &lt;- c(&quot;brianrolek&quot;, &quot;/run/user/1002/gvfs/smb-share:server=pfsbs,share=science/&quot;)
+path.df[3,] &lt;- c(&quot;cmcclure&quot;, &quot;S:\\&quot;)
+path.df[4,] &lt;- c(&quot;nutting&quot;, &quot;C:\\Dropbox\\R\\&quot;)
+path.df[5,] &lt;- c(&quot;user&quot;, &quot;C:\\Dropbox\\R\\&quot;)
+ind&lt;- which(path.df$PCs==Sys.info()[&quot;user&quot;])
+if (any(path.df$PCs==Sys.info()[&quot;user&quot;])){ # check PC is in df path.df
+  setwd(path.df$Path[ind]) # if TRUE, set path from df
+}  else {}
+rm(list=c(&quot;path.df&quot;, &quot;ind&quot;))
+setwd(&quot;APFA_IPM&quot;)
+getwd()
+
+#################################
+# The model
+################################
+sink(&quot;Analysis/JAGS models/IPM_reduced_no imm_fecfix_effort_reform.txt&quot;)
+cat(&quot;
+    model{
+    ####################################################
+    # DATA
+    # Counts
+    #  log counts of breeders = l.countBM
+    #  log counts of floaters (nonbreeders) = l.countFM
+    #  log counts of first year = l.countJM
+    # Survival
+    # Observations (O) = y  
+    # 1 seen Juvenile
+    # 2 seen Floater (nonbreeder)
+    # 3 seen Breeder
+    # 4 not seen
+    # States (S)
+    # 1 alive Juvenile
+    # 2 alive Floater (nonbreeder)
+    # 3 alive Breeder
+    # 4 dead
+    # Groups
+    # 1 wild born
+    # 2 hacked
+    # Sex
+    # 1 Female
+    # 2 Male
+    # Effort
+    # 1 Low
+    # 2 High
+    # Productivity = prod
+    ###################################################
+    # PARAMETERS
+    # F: fecundity
+    # phiJ: survival probability First Year (juvenile)
+    # phiF: survival probability floaters (nonbreeders)
+    # phiB: survival probability breeders
+    # psiJB: movement probability from First Year (juvenile) to Breeder
+    # psiFB: movement probability from Floater (nonbreeders) to Breeder
+    # psiBF: movement probability from Breeder to Floater (nonbreeders) 
+    # pJ: resight probability First Year (juvenile)
+    # pF: resight probability Floater (nonbreeders)
+    # pB: resight probability Breeder
+    ###################################################
+    ##############
+    # Priors and constraints
+    ##############
+    # Counts for first year are known with certainty
+    N[1,1] &lt;- 0 # Juvs
+    N[2,1] &lt;- 0 # Juvs to nonbreeder
+    N[3,1] &lt;- 0  # Juvs to breeders
+    N[4,1] &lt;- 0  # Nonbreeder wild to nonbreeder
+    N[5,1] &lt;- 0  # Nonbreeder wild to breeders
+    N[6,1] &lt;- 0  # Breeders to nonbreeder
+    N[7,1] &lt;- 0  # Breeders to breeders
+    N[8,1] &lt;- 0  # Wild juvs
+    N[9,1] &lt;- 0  # Nonbreeder hacked to nonbreeder
+    N[10,1] &lt;- 0  # Nonbreeder hacked to breeder
+    F[1] &lt;- 0 # No breeding first year, all hacked birds
+
+    sigma.BM ~ dunif(0,10)
+    sigma.FM ~ dunif(0,10) 
+    sigma.JM ~ dunif(0,10) 
+    sigma.prod ~dunif(0,10)
+
+    tau.BM &lt;- 1/(sigma.BM*sigma.BM)
+    tau.FM &lt;- 1/(sigma.FM*sigma.FM)
+    tau.JM &lt;- 1/(sigma.JM*sigma.JM)    
+    # tau.omegaB &lt;- 1/(sigma.omegaB*sigma.omegaB)
+    # tau.omegaF &lt;- 1/(sigma.omegaF*sigma.omegaF)
+    for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, tau.prod)  } #j
+    tau.prod &lt;- 1/(sigma.prod*sigma.prod)
+
+  for (m in 1:2){
+    l.mu.F[m] ~ dnorm(0, 0.01)I(-7,2.5)  
+    tau.F[m] &lt;-  1/(sigma.F[m]*sigma.F[m])
+    sigma.F[m] ~ dunif(0,10)
+  } # m
+    
+    # Survival 
+    tau.FS.phi &lt;- 1/(sigma.FS.phi*sigma.FS.phi)
+    sigma.FS.phi ~ dunif(0,10)
+    FSalpha &lt;- logit(FSalpha1)
+    FSalpha1 ~ dunif(0, 1)
+    
+    tau.BS.phi &lt;- 1/(sigma.BS.phi*sigma.BS.phi)
+    sigma.BS.phi ~ dunif(0,10)
+    BSalpha &lt;- logit(BSalpha1) 
+    BSalpha1 ~ dunif(0, 1)
+    
+    tau.BFR.psi &lt;- 1/(sigma.BFR.psi*sigma.BFR.psi)
+    sigma.BFR.psi ~ dunif(0,10)
+    BFRalpha &lt;- logit(BFRalpha1)
+    BFRalpha1 ~ dunif(0, 1)
+    
+    tau.pB &lt;- 1/(sigma.pB*sigma.pB)
+    sigma.pB ~ dunif(0,10)
+
+for (k in 1:2){
+    mu.pB[k]&lt;- logit(mu.pB1[k])
+    mu.pB1[k] ~ dunif(0, 1)
+} # k
+
+    for (t in 1:(n.yr-1)){
+    logit(eta.FSalpha[t]) &lt;- FSalpha + eps.FS.phi[t]
+    eps.FS.phi[t] ~ dnorm(0, tau.FS.phi)
+    
+    logit(eta.BSalpha[t]) &lt;- BSalpha + eps.BS.phi[t]
+    eps.BS.phi[t] ~ dnorm(0, tau.BS.phi)    
+    
+    logit(eta.BFRalpha[t]) &lt;- BFRalpha + eps.BFR.psi[t]
+    eps.BFR.psi[t] ~ dnorm(0, tau.BFR.psi)
+
+    logit(eta.pB[t]) &lt;- mu.pB[effort[t]] + eps.pB[t]
+    eps.pB[t] ~ dnorm(0, tau.pB)
+    } #t
+    
+    for(s in 1:2){
+    tau.JS.phi[s] &lt;- 1/(sigma.JS.phi[s]*sigma.JS.phi[s])
+    sigma.JS.phi[s] ~ dunif(0,10)
+    JSalpha[s] &lt;- logit(JSalpha1[s]) 
+    JSalpha1[s] ~ dunif(0, 1)
+    
+    tau.JBR.psi[s] &lt;- 1/(sigma.JBR.psi[s]*sigma.JBR.psi[s])
+    sigma.JBR.psi[s] ~ dunif(0,10)
+    JBRalpha[s] &lt;- logit(JBRalpha1[s]) 
+    JBRalpha1[s] ~ dunif(0, 1)
+    
+    for (t in 1:(n.yr-1)){
+    logit(eta.JSalpha[s,t]) &lt;- JSalpha[s] + eps.JS.phi[s,t]
+    eps.JS.phi[s,t] ~ dnorm(0, tau.JS.phi[s])
+    
+    logit(eta.JBRalpha[s,t]) &lt;- JBRalpha[s] + eps.JBR.psi[s,t]
+    eps.JBR.psi[s,t] ~ dnorm(0, tau.JBR.psi[s])
+    } #t
+    
+    for (h in 1:2){
+    tau.FBR.psi[s,h] &lt;- 1/(sigma.FBR.psi[s,h]*sigma.FBR.psi[s,h])
+    sigma.FBR.psi[s,h] ~ dunif(0,10)
+    FBRalpha[s,h] &lt;- logit(FBRalpha1[s,h])
+    FBRalpha1[s,h] ~ dunif(0, 1)
+    
+    for (t in 1:(n.yr-1)){
+    logit(eta.FBRalpha[s,h,t]) &lt;- FBRalpha[s,h] + eps.FBR.psi[s,h,t]
+    eps.FBR.psi[s,h,t] ~ dnorm(0, tau.FBR.psi[s,h])
+    } #t
+    } } #h #s
+    
+    for (h in 1:2){
+    tau.pF[h] &lt;- 1/(sigma.pF[h]*sigma.pF[h])
+    sigma.pF[h] ~ dunif(0,10)
+    for (k in 1:2){
+    mu.pF[k,h] &lt;- logit(mu.pF1[k,h])
+    mu.pF1[k,h] ~ dunif(0,1)
+} # k
+
+    for (t in 1:(n.yr-1)){
+    logit(eta.pF[h,t]) &lt;- mu.pF[effort[t], h] + eps.pF[h,t]
+    eps.pF[h,t] ~ dnorm(0, tau.pF[h])
+    }} #t #h
+    
+    #######################
+    # Derived params
+    #######################
+for (t in 2:(n.yr-1)){    
+    lambda[t] &lt;-  Ntot[t+1]/(Ntot[t])
+    loglambda[t] &lt;- log(lambda[t])
+} #t
+
+for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
+for (t in 3:(n.yr-1)){ 
+  for (j in 1:n.ter){
+    log(prod.mu[t,j]) &lt;- log(F[t]) + eps.prod[j] # link productivity to fecundity
+    } # j
+} # n.yr
+
+    ###############################
+    # Likelihood for productivity
+    ###############################
+for (t in 1:(n.yr-1)){ 
+    log(F[t+1]) &lt;- l.mu.F[manage[t+1]] + eps.F[t+1]
+    eps.F[t+1] ~ dnorm (0, tau.F[manage[t+1]])
+
+    ################################
+    # Likelihood for counts
+    ################################
+    # Number of wild born juvs
+    N[1,t+1] ~ dpois( (NJ[t]*eta.JSalpha[2,t]*eta.JBRalpha[2,t] + # juveniles to breeders
+                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
+                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
+                      NB[t]*eta.BSalpha[t]*(1-eta.BFRalpha[t]) )* # breeders to breeders
+                      F[t+1]/2) 
+    # Juvs to nonbreeder adults
+    N[2,t+1] ~ dbin(eta.JSalpha[2,t]*(1-eta.JBRalpha[2,t]), NJ[t] )
+    # Juvs to breeders
+    N[3,t+1] ~ dbin(eta.JSalpha[2,t]*eta.JBRalpha[2,t], NJ[t] )
+    # Nonbreeder male wild adults to nonbreeder adults
+    N[4,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,1,t]), NF[t] )
+    # Nonbreeder male wild adults to breeders
+    N[5,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,1,t], NF[t] )
+    # Breeders to nonbreeder adults
+    N[6,t+1] ~ dbin(eta.BSalpha[t]*(eta.BFRalpha[t]), NB[t] )
+    # Breeders to breeders
+    N[7,t+1] ~ dbin(eta.BSalpha[t]*(1-eta.BFRalpha[t]), NB[t] )    
+    # Nonbreeder hacked adults to nonbreeder adults
+    N[8,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,2,t]), NF[t] )
+    # Nonbreeder hacked adults to breeders
+    N[9,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,2,t], NF[t] )
+
+    # Immigrants to breeders
+    # N[10,t+1] ~ dpois(NB[t])*omegaB[t])
+    # Immigrants to nonbreeders
+    # N[11,t+1] ~ dpois(NF[t])*omegaF[t])
+    } # t
+    
+    for (t in 1:n.yr){
+    Ntot[t] &lt;- sum(N[c(1,2,3,4,5,6,7,8,9),t]) + aug[t]
+    NB[t] &lt;-  sum(N[c(3,5,7,9),t])
+    NF[t] &lt;-  sum(N[c(2,4,6,8),t])
+    NJ[t] &lt;-  N[1,t] + aug[t]
+    } # t
+    
+# Observation process    
+    for (t in 2:n.yr){
+    l.countBM[t] ~ dnorm(log(NB[t]), tau.BM) # breeding males
+    l.countFM[t] ~ dnorm(log(NF[t]), tau.FM) # nonbreeding adult males
+    l.countJM[t] ~ dnorm(log(NJ[t]), tau.JM) # juvenile males
+} # t
+    
+    ################################
+    # Likelihood for survival
+    ################################
+    for (i in 1:nind){
+    for (t in 1:(n.yr-1)){
+    #Survival
+    phiJ[i,t] &lt;- eta.JSalpha[sex[i],t] 
+    phiF[i,t] &lt;- eta.FSalpha[t] 
+    phiB[i,t] &lt;- eta.BSalpha[t]
+    #Recruitment
+    psiJB[i,t] &lt;- eta.JBRalpha[sex[i],t] 
+    psiFB[i,t] &lt;- eta.FBRalpha[sex[i], hacked[i],t]
+    psiBF[i,t] &lt;- eta.BFRalpha[t] 
+    #Re-encounter
+    pF[i,t] &lt;- eta.pF[hacked[i],t] 
+    pB[i,t] &lt;- eta.pB[t] 
+    }#t
+    }#i
+    
+    # Define state-transition and observation matrices
+    for (i in 1:nind){  
+    # Define probabilities of state S(t+1) given S(t)
+    for (t in first[i]:(n.yr-1)){
+    ps[1,i,t,1] &lt;- 0
+    ps[1,i,t,2] &lt;- phiJ[i,t] * (1-psiJB[i,t])
+    ps[1,i,t,3] &lt;- phiJ[i,t] * psiJB[i,t]
+    ps[1,i,t,4] &lt;- 1-phiJ[i,t]
+    
+    ps[2,i,t,1] &lt;- 0
+    ps[2,i,t,2] &lt;- phiF[i,t] * (1-psiFB[i,t])
+    ps[2,i,t,3] &lt;- phiF[i,t] * psiFB[i,t]
+    ps[2,i,t,4] &lt;- 1-phiF[i,t]
+    
+    ps[3,i,t,1] &lt;- 0
+    ps[3,i,t,2] &lt;- phiB[i,t] * psiBF[i,t]
+    ps[3,i,t,3] &lt;- phiB[i,t] * (1-psiBF[i,t])
+    ps[3,i,t,4] &lt;- 1-phiB[i,t]
+    
+    ps[4,i,t,1] &lt;- 0
+    ps[4,i,t,2] &lt;- 0
+    ps[4,i,t,3] &lt;- 0
+    ps[4,i,t,4] &lt;- 1
+    
+    # Define probabilities of O(t) given S(t)
+    po[1,i,t,1] &lt;- 1 
+    po[1,i,t,2] &lt;- 0
+    po[1,i,t,3] &lt;- 0
+    po[1,i,t,4] &lt;- 0
+    
+    po[2,i,t,1] &lt;- 0
+    po[2,i,t,2] &lt;- pF[i,t]
+    po[2,i,t,3] &lt;- 0
+    po[2,i,t,4] &lt;- 1-pF[i,t]
+    
+    po[3,i,t,1] &lt;- 0
+    po[3,i,t,2] &lt;- 0
+    po[3,i,t,3] &lt;- pB[i,t]
+    po[3,i,t,4] &lt;- 1-pB[i,t]
+    
+    po[4,i,t,1] &lt;- 0
+    po[4,i,t,2] &lt;- 0
+    po[4,i,t,3] &lt;- 0
+    po[4,i,t,4] &lt;- 1
+    } #t
+    } #i
+    
+    # Likelihood 
+    for (i in 1:nind){
+    # Define latent state at first capture
+    z[i,first[i]] &lt;- y[i,first[i]]
+    for (t in (first[i]+1):n.yr){
+    # State process: draw S(t) given S(t-1)
+    z[i,t] ~ dcat(ps[z[i,t-1], i, t-1,1:4])
+    # Observation process: draw O(t) given S(t)
+    y[i,t] ~ dcat(po[z[i,t], i, t-1,1:4])
+    } #t
+    } #i
+    
+    } #model
+    &quot;,fill = TRUE)
+sink()</code></pre>
+<p>Literature cited Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.</p>
+<p>Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.</p>
+<p>Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.</p>
+<p>Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.</p>
 </div>
 </div>
 

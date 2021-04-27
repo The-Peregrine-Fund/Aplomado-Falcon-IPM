@@ -1,0 +1,372 @@
+---
+title: "Preliminary Analyses of Survival, Recruitment, Resight, and Emigration"
+author: "Brian W. Rolek"
+date: "April 19, 2021"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  github_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE, error=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('01-run-survival-global-JAGS.R')
+```
+
+#S1 Supplemental materials   
+for:  
+B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS
+
+# 1. Model Formulation
+
+## 1.1 Introduction
+This Rmarkdown document describes preliminary analyses using a Cormack-Jolly-Seber model with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008). These analyses assess the importance of covariates for later inclusion in the integrated population model (IPM), and assess the importance of emigration for inclusion in the IPM. 
+
+## 1.2 Observation Matrix  
+First, we specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
+Observed states (1--5, columns left to right):  
+1.  Seen first-year  
+2.  Seen nonbreeder  
+3.  Seen breeder  
+4.  Seen dead  
+5.  Not seen  
+
+Real states (1--7, rows top to bottom):  
+1.  First-year  
+2.  Nonbreeder  
+3.  Breeder  
+4.  Recovered recently dead   
+5.  Dead not recovered  
+6.  Emigrated and alive  
+7.  Emigrated and dead  
+
+where superscripts with capital letters are used as labels for life cycle states: first-year ($O$), nonbreeder ($A$), and breeder ($B$). Observations are related to true states using transition and resight probabilities ($p$) for nonbreeder ($p^A$) and breeders ($p^B$):
+$$PO=
+\begin{bmatrix} 
+1 & 0 & 0 & 0 & 0\\
+0 & p^A & 0 & 0 & 1-p^A\\
+0 & 0 & p^B & 0 & 1-p^B\\
+0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 1\\
+0 & 0 & 0 & 0 & 1\\
+0 & 0 & 0 & 0 & 1\\
+\end{bmatrix}
+$$
+We could not estimate resight probabilities of first-year birds because they can only be observed once and cannot be resighted. Therefore, we assume perfect resight probability (1.0 at row 1 and column 1) because most of these were released captive bred birds or were birds observed during productivity surveys. 
+
+## 1.3 State Transition Matrix  
+Next, we specified the state transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-year at time t and column 1 corresponds with first-year at time t+1.
+$$ \Omega=
+\begin{bmatrix} 
+0 & \phi^F(1-\psi^F)(1-\delta)  & \phi^F\psi^F(1-\delta) & (1-\phi^F)r(1-\delta) & (1-\phi^F)(1-r)(1-\delta) & \phi^F\delta & (1-\phi^F)(1-r)\delta\\ 
+0 & \phi^A(1-\psi^A)(1-\delta)  & \phi^A\psi^A(1-\delta) & (1-\phi^A)r(1-\delta) & (1-\phi^A)(1-r)(1-\delta) & \phi^A\delta & (1-\phi^A)(1-r)\delta\\ 
+0 & \phi^B(1-\psi^B)(1-\delta)  & \phi^B\psi^B(1-\delta) & (1-\phi^B)r(1-\delta) & (1-\phi^B)(1-r)(1-\delta) & \phi^B\delta & (1-\phi^B)(1-r)\delta\\ 
+0 & 0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 1\\
+\end{bmatrix}
+$$
+
+## 1.4 Global CJS Survival Model Constraints  
+We implemented the global survival model in Just Another Gibbs Sampler (JAGS). The "global survival model" includes all covariates considered here. Probabilities of survival ($\phi$), recruitment ($\psi$), and resight ($p$) are contrained to vary by sex ($s$, male or female), hacked ($h$, wild-born or captive bred). Each life stage (first-year, nonbreeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, nonbreeder, and breeder birds. Superscripts with greek symbols are used to label parameters. 
+$$logit(\phi_{i,t})=\mu_{s,h}^{\phi} + \epsilon_{s,h,t}^{\phi}$$
+$$\epsilon_{s,h,t}^{\phi}=normal(0,\tau=1/\sigma_{s,h}^{\phi,2})$$ 
+$$logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}$$
+
+$$\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})$$ 
+Furthermore, probability of resight varied by field effort ($e$) for nonbreeders and breeders. 
+$$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}$$
+$$\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})$$ 
+Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to constant values over time to aid with convergence and for computational efficiency. 
+$$logit(\delta_{i,t})=\mu^{\delta}$$
+Including emigration within this model allowed us to estimate _true_ survival rather than _apparent_ survival, because apparent survival is confounded with emigration in some CJS models. 
+
+# 2. Implementation of the Global CJS Survival Model
+
+## 2.1 JAGS and R Code for Implementing the Global CJS Survival Model  
+
+```{r, global, eval=FALSE}
+```
+
+## 2.2 Postprocess Global Model
+We postprocess the output from JAGS to compare sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.  
+
+### 2.2.1 Functions to Summarize Posterior Distritbutions
+```{r funcs, message=FALSE}
+library (jagsUI)
+library (ggplot2)
+library (gridExtra)
+
+# Function to compute highest density interval. From Kruschke 2011.
+HDIofMCMC = function( sampleVec , credMass=0.95 ) {
+  sortedPts = sort( sampleVec )
+  ciIdxInc = floor( credMass * length( sortedPts ) )
+  nCIs = length( sortedPts ) - ciIdxInc
+  ciWidth = rep( 0 , nCIs )
+  for ( i in 1:nCIs ) {
+    ciWidth[ i ] = sortedPts[ i + ciIdxInc ] - sortedPts[ i ]
+  }
+  HDImin = sortedPts[ which.min( ciWidth ) ]
+  HDImax = sortedPts[ which.min( ciWidth ) + ciIdxInc ]
+  HDIlim = c( HDImin , HDImax )
+  return( HDIlim )
+}
+
+# Function to compute summary stats over posteriors
+data_summary <- function(x) {
+  m <- median(x)
+  ymin <- HDIofMCMC(x, credMass=0.95)[[1]]
+  ymax <- HDIofMCMC(x, credMass=0.95)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+```
+
+### 2.2.2 Calculate Differences Between Groups  
+
+We load the results from the global model to assess which covariates had important effects on parameters. 
+```{r ppsurvival, eval=TRUE}
+load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\surv7-jags-global.Rdata")
+
+O.surv <- O.rec <- A.surv <- A.rec <- B.surv <- B.rec <- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
+A.resight <- B.resight <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],3))
+##########################
+# First-year (O) capital letter o, rather than zero so code works 
+#########################
+# Survival
+# wild - hacked
+O.surv[,1]<- (out$sims.list$OSalpha1[,1,1] +         out$sims.list$OSalpha1[,2,1])/2 -
+  (out$sims.list$OSalpha1[,1,2] + out$sims.list$OSalpha1[,2,2])/2
+# female - male
+O.surv[,2]<- (out$sims.list$OSalpha1[,1,1] + out$sims.list$OSalpha1[,1,2])/2 -
+  (out$sims.list$OSalpha1[,2,1] + out$sims.list$OSalpha1[,2,2])/2
+# Recruitment
+# wild - hacked
+O.rec[,1]<- (out$sims.list$OBRalpha1[,1,1] + out$sims.list$OBRalpha1[,2,1])/2 -
+  (out$sims.list$OBRalpha1[,1,2] + out$sims.list$OBRalpha1[,2,2])/2
+# female - male
+O.rec[,2]<- (out$sims.list$OBRalpha1[,1,1] + out$sims.list$OBRalpha1[,1,2])/2 -
+  (out$sims.list$OBRalpha1[,2,1] + out$sims.list$OBRalpha1[,2,2])/2
+
+##########################
+# Adult Nonbreeders (A)
+#########################
+# Survival
+# wild - hacked
+A.surv[,1]<- (out$sims.list$ASalpha1[,1,1] + out$sims.list$ASalpha1[,2,1])/2 -
+  (out$sims.list$ASalpha1[,1,2] + out$sims.list$ASalpha1[,2,2])/2
+# female - male
+A.surv[,2]<- (out$sims.list$ASalpha1[,1,1] + out$sims.list$ASalpha1[,1,2])/2 -
+  (out$sims.list$ASalpha1[,2,1] + out$sims.list$ASalpha1[,2,2])/2
+# Recruitment
+# wild - hacked
+A.rec[,1]<- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,2,1])/2 -
+  (out$sims.list$ABRalpha1[,1,2] + out$sims.list$ABRalpha1[,2,2])/2
+# female - male
+A.rec[,2]<- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,1,2])/2 -
+  (out$sims.list$ABRalpha1[,2,1] + out$sims.list$ABRalpha1[,2,2])/2
+# Resight prob
+# wild-hacked
+A.resight[,1]<- (out$sims.list$mu.pA1[,1,1,1] + out$sims.list$mu.pA1[,1,1,2] + out$sims.list$mu.pA1[,2,1,1] + out$sims.list$mu.pA1[,2,1,2])/4 -
+              (out$sims.list$mu.pA1[,1,2,1] + out$sims.list$mu.pA1[,1,2,2]+
+                out$sims.list$mu.pA1[,2,2,1] + out$sims.list$mu.pA1[,2,2,2])/4
+# female - male
+A.resight[,2]<- (out$sims.list$mu.pA1[,1,1,1] + out$sims.list$mu.pA1[,1,1,2]+
+                 out$sims.list$mu.pA1[,1,2,1] + out$sims.list$mu.pA1[,1,2,2])/4 -
+              (out$sims.list$mu.pA1[,2,1,1] + out$sims.list$mu.pA1[,2,1,2]+
+                 out$sims.list$mu.pA1[,2,2,1] + out$sims.list$mu.pA1[,2,2,2])/4
+
+# high effort - low effort
+A.resight[,3]<- (out$sims.list$mu.pA1[,1,1,2] + out$sims.list$mu.pA1[,2,1,2]+
+                 out$sims.list$mu.pA1[,1,2,2] + out$sims.list$mu.pA1[,2,2,2])/4 -
+              (out$sims.list$mu.pA1[,1,1,1] + out$sims.list$mu.pA1[,2,1,1]+
+                out$sims.list$mu.pA1[,1,2,1] + out$sims.list$mu.pA1[,2,2,1])/4
+##########################
+# Adult Breeders (B)
+#########################
+# Survival
+# wild - hacked
+B.surv[,1]<- (out$sims.list$BSalpha1[,1,1] + out$sims.list$BSalpha1[,2,1])/2 -
+  (out$sims.list$BSalpha1[,1,2] + out$sims.list$BSalpha1[,2,2])/2
+# female - male
+B.surv[,2]<- (out$sims.list$BSalpha1[,1,1] + out$sims.list$BSalpha1[,1,2])/2 -
+  (out$sims.list$BSalpha1[,2,1] + out$sims.list$BSalpha1[,2,2])/2
+# Recruitment
+# wild - hacked
+B.rec[,1]<- (out$sims.list$BARalpha1[,1,1] + out$sims.list$BARalpha1[,2,1])/2 -
+  (out$sims.list$BARalpha1[,1,2] + out$sims.list$BARalpha1[,2,2])/2
+# female - male
+B.rec[,2]<- (out$sims.list$BARalpha1[,1,1] + out$sims.list$BARalpha1[,1,2])/2 -
+  (out$sims.list$BARalpha1[,2,1] + out$sims.list$BARalpha1[,2,2])/2
+# resight prob  
+# wild-hacked
+B.resight[,1]<- (out$sims.list$mu.pB1[,1,1,1] + out$sims.list$mu.pB1[,1,1,2] + out$sims.list$mu.pB1[,2,1,1] + out$sims.list$mu.pB1[,2,1,2])/4 -
+              (out$sims.list$mu.pB1[,1,2,1] + out$sims.list$mu.pB1[,1,2,2]+
+                out$sims.list$mu.pB1[,2,2,1] + out$sims.list$mu.pB1[,2,2,2])/4
+# female - male
+B.resight[,2]<- (out$sims.list$mu.pB1[,1,1,1] + out$sims.list$mu.pB1[,1,1,2]+
+                 out$sims.list$mu.pB1[,1,2,1] + out$sims.list$mu.pB1[,1,2,2])/4 -
+              (out$sims.list$mu.pB1[,2,1,1] + out$sims.list$mu.pB1[,2,1,2]+
+                 out$sims.list$mu.pB1[,2,2,1] + out$sims.list$mu.pB1[,2,2,2])/4
+
+# high effort - low effort
+B.resight[,3]<- (out$sims.list$mu.pB1[,1,1,2] + out$sims.list$mu.pB1[,2,1,2]+
+                 out$sims.list$mu.pB1[,1,2,2] + out$sims.list$mu.pB1[,2,2,2])/4 -
+              (out$sims.list$mu.pB1[,1,1,1] + out$sims.list$mu.pB1[,2,1,1]+
+                out$sims.list$mu.pB1[,1,2,1] + out$sims.list$mu.pB1[,2,2,1])/4
+
+stats <- data.frame(pval=NA, lci=NA, uci=NA)
+
+# combine survival posteriors
+temp.df<- data.frame(Draws=O.surv[,1], Cat="Hacked", State="First-year")
+temp.df1<- data.frame(Draws=O.surv[,2], Cat="Sex", State="First-year")
+temp.df2<- data.frame(Draws=B.surv[,1], Cat="Hacked", State="Breeder")
+temp.df3<- data.frame(Draws=B.surv[,2], Cat="Sex", State="Breeder")
+temp.df4<- data.frame(Draws=A.surv[,1], Cat="Hacked", State="Nonbreeder")
+temp.df5<- data.frame(Draws=A.surv[,2], Cat="Sex", State="Nonbreeder")
+df.surv<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.surv$combined<- factor(paste(df.surv$State, df.surv$Cat))
+df.surv$combined <- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
+
+# combine recruitment posteriors
+temp.df<- data.frame(Draws=O.rec[,1], Cat="Hacked", State="First-year")
+temp.df1<- data.frame(Draws=O.rec[,2], Cat="Sex", State="First-year")
+temp.df2<- data.frame(Draws=B.rec[,1], Cat="Hacked", State="Breeder")
+temp.df3<- data.frame(Draws=B.rec[,2], Cat="Sex", State="Breeder")
+temp.df4<- data.frame(Draws=A.rec[,1], Cat="Hacked", State="Nonbreeder")
+temp.df5<- data.frame(Draws=A.rec[,2], Cat="Sex", State="Nonbreeder")
+df.rec<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.rec$combined<- factor(paste(df.rec$State, df.rec$Cat))
+df.rec$combined <- factor(df.rec$combined, levels=levels(df.rec$combined)[c(3,4,5,6,1,2)])
+
+# combine resight posteriors
+temp.df2<- data.frame(Draws=B.resight[,1], Cat="Hacked", State="Breeder")
+temp.df3<- data.frame(Draws=B.resight[,2], Cat="Sex", State="Breeder")
+temp.df4<- data.frame(Draws=B.resight[,3], Cat="Effort", State="Breeder")
+temp.df5<- data.frame(Draws=A.resight[,1], Cat="Hacked", State="Nonbreeder")
+temp.df6<- data.frame(Draws=A.resight[,2], Cat="Sex", State="Nonbreeder")
+temp.df7<- data.frame(Draws=A.resight[,3], Cat="Effort", State="Nonbreeder")
+df.resight<- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
+df.resight$combined<- factor(paste(df.resight$State, df.resight$Cat))
+df.resight$combined <- factor(df.resight$combined, levels=c(levels(df.resight$combined)[c(4,5,6,1,2,3)])) 
+# print median and 95% HDIs
+ests <- data.frame(round(rbind(
+  do.call(rbind, tapply(df.surv$Draws, df.surv$combined, data_summary)),
+  do.call(rbind, tapply(df.rec$Draws, df.rec$combined, data_summary)),
+  do.call(rbind, tapply(df.resight$Draws, df.resight$combined, data_summary))
+),3))
+colnames(ests) <- c("median", "LHDI_95", "UHDI_95")
+ests$param <- c(rep("survival", 6), rep("recruitment", 6), rep("resight", 6) )
+ests$important <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |
+                         (ests$LHDI_95 <= 0 & ests$UHDI_95<=0), 
+                         "yes", "no") 
+```
+
+### 2.2.3 The Importance of Covariates in the Global CJS Survival Model
+We plot the differences in survival, recruitment, and resight probabilities and evaluate their importance when 85% highest density intervals did not intersect zero.
+```{r survdiffs1, fig.width=10, fig.height=10}
+print(ests)
+
+```
+
+ 
+```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig SX. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival submodel."}
+txt <- 30
+lwd <- 1.5
+df.surv$State <- factor(df.surv$State, levels=c("First-year", "Nonbreeder", "Breeder"))
+
+ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
+  geom_hline(yintercept=0, linetype="solid", size=lwd) +
+  geom_violin(aes(fill=State)) + scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) +
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  theme_classic() + theme (text = element_text(size=txt)) +  
+  ylab("Survival\ndifference") + xlab ("") + 
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) 
+  
+pt <- ggplot(df.rec, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
+  geom_hline(yintercept=0, linetype="solid", size=lwd) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) + 
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  theme_classic() + theme (text = element_text(size=txt)) +
+  ylab("Recruitment\ndifference") + xlab ("") + 
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" ))
+
+pr <- ggplot(df.resight, aes(x = combined, y = Draws, group=combined)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
+  geom_hline(yintercept=0, linetype="solid", size=lwd) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c( "#cccccc", "#969696")) +
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  theme_classic() + theme (text = element_text(size=txt)) +
+  ylab("Resight\ndifference") + xlab ("") + 
+  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) 
+
+grid.arrange(ps + theme(legend.position=c(0.5,0.95), legend.direction="horizontal",legend.background = element_rect(fill = "transparent")), 
+             pt + theme(legend.position="none"), 
+             pr + theme(legend.position="none"), 
+             nrow=3,
+             layout_matrix = rbind(c(1, 1, 1, 1, 1, 1),
+                                   c(2, 2, 2, 2, 2, 2),
+                                   c(3, 3, 3, 3, 3, 3))) 
+
+```
+### 2.2.4 The Importance of Emigration
+```{r emigration, fig.width=6, fig.height=4, fig.cap= "Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
+hist(out$sims.list$em, main="Histogram of Emigration", xlab="Posterior draws of emigration")
+abline(v=median(out$sims.list$em), lwd=2)
+abline(v=HDIofMCMC(out$sims.list$em, cred=0.95), lty=2, lwd=2)
+median(out$sims.list$em)
+HDIofMCMC(out$sims.list$em, cred=0.95)
+
+```
+# 3. Implementation of the CJS Survival Model with Reduced Covariates  
+
+## 3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates
+We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates that were not important. 
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('02-run-survival-reduced-JAGS.R')
+```
+```{r, reduced, eval=FALSE}
+```
+
+# 4. Implementation of the Integrated Population Model with Immigration  
+We specify the IPM including observation and state trasition matices for the survival submodel in the manuscript. These matrices are identical for IPMs with and without immigration.  
+
+## 4.1 Formulation of the IPM with Immigration
+This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for nonbreeders and breeders separately. The number of immigrants ($N_{t+1}^{I}$) was specified as  
+
+$$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega_{t})$$
+$$log(\omega_{t})=\mu^{\omega}+\epsilon_{t}^{\omega}$$
+$$\epsilon_{t}^{\omega} \sim {\sf normal} (0,\sigma^{\omega})$$
+We did not include immigration of first-year birds because they must be recruited as breeders or nonbreeders during the following post-breeding survey. 
+
+## 4.2 JAGS and R Code for the IPM with Immigration  
+
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('03-run-ipm-immigration-JAGS.R')
+```
+```{r,ipm1, eval=FALSE}
+```
+
+# 5. Implementation of the Integrated Population Model without Immigration 
+## 5.1 JAGS and R Code for the IPM without Immigration 
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('04-run-ipm-no-immigration-JAGS.R')
+```
+```{r,ipm2, eval=FALSE}
+```
+
+Literature cited 
+Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.
+
+Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.
+
+Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.
+
+Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.

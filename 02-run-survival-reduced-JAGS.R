@@ -1,7 +1,9 @@
+## ---- reduced --------
+# JAGS must be installed on your computer
 library (jagsUI)
-load("/scratch/brolek/aplo_ipm/data/final-data.Rdata")
+load("./data/final-data.Rdata")
 m<- c("surv7-jags-reduced")
-modfl <- paste("/scratch/brolek/aplo_ipm/analysis/", m, ".txt", sep="")
+modfl <- paste("./", m, ".txt", sep="")
 sink(modfl)
 cat("
     model{
@@ -280,4 +282,4 @@ ni <- 10000; nt <- 1; nb <- 5000; nc <- 1; na <- 100 # time-saving run, but inad
 out <- jags(datl, inits, params, modfl,  
             n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
             parallel=T, module=c("glm", "bugs"))
-save(file=paste("/scratch/brolek/aplo_ipm/modeloutputs/", m, ".Rdata", sep=""), list="out")
+save(file=paste("./", m, ".Rdata", sep=""), list="out")
