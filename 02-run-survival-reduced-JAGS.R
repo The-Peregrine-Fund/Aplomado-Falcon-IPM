@@ -1,7 +1,7 @@
 ## ---- reduced --------
 # JAGS must be installed on your computer
 library (jagsUI)
-load("./data/final-data.Rdata")
+load("./data/data-7states.Rdata")
 m<- c("surv7-jags-reduced")
 modfl <- paste("./", m, ".txt", sep="")
 sink(modfl)

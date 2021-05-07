@@ -10,6 +10,12 @@ output:
     toc: yes
 ---
 
+<style type="text/css">
+  body{
+  font-size: 16pt;
+}
+</style>
+
 ```{r setup, include=FALSE, error=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -21,7 +27,7 @@ knitr::read_chunk('01-run-survival-global-JAGS.R')
 for:  
 B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS
 
-# 1. Model Formulation
+# 1. Multi-state CJS Survival Model Formulation with Emigration
 
 ## 1.1 Introduction
 This Rmarkdown document describes preliminary analyses using a Cormack-Jolly-Seber model with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008). These analyses assess the importance of covariates for later inclusion in the integrated population model (IPM), and assess the importance of emigration for inclusion in the IPM. 
@@ -62,9 +68,9 @@ We could not estimate resight probabilities of first-year birds because they can
 Next, we specified the state transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-year at time t and column 1 corresponds with first-year at time t+1.
 $$ \Omega=
 \begin{bmatrix} 
-0 & \phi^F(1-\psi^F)(1-\delta)  & \phi^F\psi^F(1-\delta) & (1-\phi^F)r(1-\delta) & (1-\phi^F)(1-r)(1-\delta) & \phi^F\delta & (1-\phi^F)(1-r)\delta\\ 
-0 & \phi^A(1-\psi^A)(1-\delta)  & \phi^A\psi^A(1-\delta) & (1-\phi^A)r(1-\delta) & (1-\phi^A)(1-r)(1-\delta) & \phi^A\delta & (1-\phi^A)(1-r)\delta\\ 
-0 & \phi^B(1-\psi^B)(1-\delta)  & \phi^B\psi^B(1-\delta) & (1-\phi^B)r(1-\delta) & (1-\phi^B)(1-r)(1-\delta) & \phi^B\delta & (1-\phi^B)(1-r)\delta\\ 
+0 & \phi^0(1-\psi^{0B})(1-\delta)  & \phi^0\psi^{0B}(1-\delta) & (1-\phi^0)r(1-\delta) & (1-\phi^0)(1-r)(1-\delta) & \phi^0\delta & (1-\phi^0)(1-r)\delta\\ 
+0 & \phi^{AB}(1-\psi^{AB})(1-\delta)  & \phi^A\psi^{AB}(1-\delta) & (1-\phi^A)r(1-\delta) & (1-\phi^A)(1-r)(1-\delta) & \phi^A\delta & (1-\phi^A)(1-r)\delta\\ 
+0 & \phi^B(1-\psi^{BA})(1-\delta)  & \phi^B\psi^{BA}(1-\delta) & (1-\phi^B)r(1-\delta) & (1-\phi^B)(1-r)(1-\delta) & \phi^B\delta & (1-\phi^B)(1-r)\delta\\ 
 0 & 0 & 0 & 0 & 1 & 0 & 0\\
 0 & 0 & 0 & 0 & 1 & 0 & 0\\
 0 & 0 & 0 & 0 & 0 & 1 & 0\\
@@ -84,9 +90,9 @@ $$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}$$
 $$\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})$$ 
 Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to constant values over time to aid with convergence and for computational efficiency. 
 $$logit(\delta_{i,t})=\mu^{\delta}$$
-Including emigration within this model allowed us to estimate _true_ survival rather than _apparent_ survival, because apparent survival is confounded with emigration in some CJS models. 
+Including emigration within this model allowed us to estimate _true_ survival rather than _apparent_ survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models. 
 
-# 2. Implementation of the Global CJS Survival Model
+# 2. Implementation of the Global Multi-state CJS Survival Model
 
 ## 2.1 JAGS and R Code for Implementing the Global CJS Survival Model  
 
@@ -135,6 +141,7 @@ load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\surv7-jags
 
 O.surv <- O.rec <- A.surv <- A.rec <- B.surv <- B.rec <- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
 A.resight <- B.resight <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],3))
+
 ##########################
 # First-year (O) capital letter o, rather than zero so code works 
 #########################
@@ -186,6 +193,7 @@ A.resight[,3]<- (out$sims.list$mu.pA1[,1,1,2] + out$sims.list$mu.pA1[,2,1,2]+
                  out$sims.list$mu.pA1[,1,2,2] + out$sims.list$mu.pA1[,2,2,2])/4 -
               (out$sims.list$mu.pA1[,1,1,1] + out$sims.list$mu.pA1[,2,1,1]+
                 out$sims.list$mu.pA1[,1,2,1] + out$sims.list$mu.pA1[,2,2,1])/4
+
 ##########################
 # Adult Breeders (B)
 #########################
@@ -325,10 +333,10 @@ median(out$sims.list$em)
 HDIofMCMC(out$sims.list$em, cred=0.95)
 
 ```
-# 3. Implementation of the CJS Survival Model with Reduced Covariates  
+# 3. Implementation of the Multi-state CJS Survival Model with Reduced Covariates  
 
 ## 3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates
-We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates that were not important. 
+We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates and parameters that were not important (e.g., emigration). 
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('02-run-survival-reduced-JAGS.R')
 ```
@@ -368,5 +376,7 @@ Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation 
 Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.
 
 Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.
+
+Krushke, J. K. 2011. Doing Bayesian Data Analysis: A Tutorial with R and BUGS. Elsevier Inc., Burlington, Massachusetts, USA.
 
 Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.

@@ -2,7 +2,11 @@
 #################################
 # The model
 ################################
-sink("Analysis/JAGS models/IPM_reduced_imm_fecfix_effort_reform.txt")
+library (jagsUI)
+load(".\\data\\data-7states.Rdata")
+m<- c("ipm-jags-imm")
+modfl <- paste(".\\", m, ".txt", sep="")
+sink(modfl)
 cat("
     model{
     ####################################################
@@ -322,3 +326,7 @@ for (t in 1:(n.yr-1)){
     } #model
     ",fill = TRUE)
 sink()
+
+# data manip- assign dead recoveries as "not seen"
+datl$y[datl$y==5] <- 4
+datl$z[datl$z==4] <- NA

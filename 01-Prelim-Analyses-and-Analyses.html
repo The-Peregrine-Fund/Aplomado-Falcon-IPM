@@ -189,13 +189,13 @@ summary {
 <div id="TOC">
 <ul>
 <li><a href="#s1-supplemental-materials">S1 Supplemental materials</a></li>
-<li><a href="#model-formulation">1. Model Formulation</a><ul>
+<li><a href="#multi-state-cjs-survival-model-formulation-with-emigration">1. Multi-state CJS Survival Model Formulation with Emigration</a><ul>
 <li><a href="#introduction">1.1 Introduction</a></li>
 <li><a href="#observation-matrix">1.2 Observation Matrix</a></li>
 <li><a href="#state-transition-matrix">1.3 State Transition Matrix</a></li>
 <li><a href="#global-cjs-survival-model-constraints">1.4 Global CJS Survival Model Constraints</a></li>
 </ul></li>
-<li><a href="#implementation-of-the-global-cjs-survival-model">2. Implementation of the Global CJS Survival Model</a><ul>
+<li><a href="#implementation-of-the-global-multi-state-cjs-survival-model">2. Implementation of the Global Multi-state CJS Survival Model</a><ul>
 <li><a href="#jags-and-r-code-for-implementing-the-global-cjs-survival-model">2.1 JAGS and R Code for Implementing the Global CJS Survival Model</a></li>
 <li><a href="#postprocess-global-model">2.2 Postprocess Global Model</a><ul>
 <li><a href="#functions-to-summarize-posterior-distritbutions">2.2.1 Functions to Summarize Posterior Distritbutions</a></li>
@@ -204,7 +204,7 @@ summary {
 <li><a href="#the-importance-of-emigration">2.2.4 The Importance of Emigration</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#implementation-of-the-cjs-survival-model-with-reduced-covariates">3. Implementation of the CJS Survival Model with Reduced Covariates</a><ul>
+<li><a href="#implementation-of-the-multi-state-cjs-survival-model-with-reduced-covariates">3. Implementation of the Multi-state CJS Survival Model with Reduced Covariates</a><ul>
 <li><a href="#jags-and-r-code-for-the-cjs-survival-model-with-reduced-covariates">3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates</a></li>
 </ul></li>
 <li><a href="#implementation-of-the-integrated-population-model-with-immigration">4. Implementation of the Integrated Population Model with Immigration</a><ul>
@@ -217,13 +217,18 @@ summary {
 </ul>
 </div>
 
+<style type="text/css">
+  body{
+  font-size: 16pt;
+}
+</style>
 <div id="s1-supplemental-materials" class="section level1">
 <h1>S1 Supplemental materials</h1>
 <p>for:<br />
 B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS</p>
 </div>
-<div id="model-formulation" class="section level1">
-<h1>1. Model Formulation</h1>
+<div id="multi-state-cjs-survival-model-formulation-with-emigration" class="section level1">
+<h1>1. Multi-state CJS Survival Model Formulation with Emigration</h1>
 <div id="introduction" class="section level2">
 <h2>1.1 Introduction</h2>
 <p>This Rmarkdown document describes preliminary analyses using a Cormack-Jolly-Seber model with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008). These analyses assess the importance of covariates for later inclusion in the integrated population model (IPM), and assess the importance of emigration for inclusion in the IPM.</p>
@@ -261,9 +266,9 @@ Observed states (1--5, columns left to right):<br />
 <h2>1.3 State Transition Matrix</h2>
 <p>Next, we specified the state transition matrix (<span class="math inline">\(\Omega\)</span>) that governs dynamics between true states over time. Rows of the matrix represent true states during time step (<span class="math inline">\(t\)</span>), and columns represent true states during the following time step (<span class="math inline">\(t+1\)</span>). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-year at time t and column 1 corresponds with first-year at time t+1. <span class="math display">\[ \Omega=
 \begin{bmatrix} 
-0 &amp; \phi^F(1-\psi^F)(1-\delta)  &amp; \phi^F\psi^F(1-\delta) &amp; (1-\phi^F)r(1-\delta) &amp; (1-\phi^F)(1-r)(1-\delta) &amp; \phi^F\delta &amp; (1-\phi^F)(1-r)\delta\\ 
-0 &amp; \phi^A(1-\psi^A)(1-\delta)  &amp; \phi^A\psi^A(1-\delta) &amp; (1-\phi^A)r(1-\delta) &amp; (1-\phi^A)(1-r)(1-\delta) &amp; \phi^A\delta &amp; (1-\phi^A)(1-r)\delta\\ 
-0 &amp; \phi^B(1-\psi^B)(1-\delta)  &amp; \phi^B\psi^B(1-\delta) &amp; (1-\phi^B)r(1-\delta) &amp; (1-\phi^B)(1-r)(1-\delta) &amp; \phi^B\delta &amp; (1-\phi^B)(1-r)\delta\\ 
+0 &amp; \phi^0(1-\psi^{0B})(1-\delta)  &amp; \phi^0\psi^{0B}(1-\delta) &amp; (1-\phi^0)r(1-\delta) &amp; (1-\phi^0)(1-r)(1-\delta) &amp; \phi^0\delta &amp; (1-\phi^0)(1-r)\delta\\ 
+0 &amp; \phi^{AB}(1-\psi^{AB})(1-\delta)  &amp; \phi^A\psi^{AB}(1-\delta) &amp; (1-\phi^A)r(1-\delta) &amp; (1-\phi^A)(1-r)(1-\delta) &amp; \phi^A\delta &amp; (1-\phi^A)(1-r)\delta\\ 
+0 &amp; \phi^B(1-\psi^{BA})(1-\delta)  &amp; \phi^B\psi^{BA}(1-\delta) &amp; (1-\phi^B)r(1-\delta) &amp; (1-\phi^B)(1-r)(1-\delta) &amp; \phi^B\delta &amp; (1-\phi^B)(1-r)\delta\\ 
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0\\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0\\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0\\
@@ -274,11 +279,11 @@ Observed states (1--5, columns left to right):<br />
 <div id="global-cjs-survival-model-constraints" class="section level2">
 <h2>1.4 Global CJS Survival Model Constraints</h2>
 <p>We implemented the global survival model in Just Another Gibbs Sampler (JAGS). The &quot;global survival model&quot; includes all covariates considered here. Probabilities of survival (<span class="math inline">\(\phi\)</span>), recruitment (<span class="math inline">\(\psi\)</span>), and resight (<span class="math inline">\(p\)</span>) are contrained to vary by sex (<span class="math inline">\(s\)</span>, male or female), hacked (<span class="math inline">\(h\)</span>, wild-born or captive bred). Each life stage (first-year, nonbreeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, nonbreeder, and breeder birds. Superscripts with greek symbols are used to label parameters. <span class="math display">\[logit(\phi_{i,t})=\mu_{s,h}^{\phi} + \epsilon_{s,h,t}^{\phi}\]</span> <span class="math display">\[\epsilon_{s,h,t}^{\phi}=normal(0,\tau=1/\sigma_{s,h}^{\phi,2})\]</span> <span class="math display">\[logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}\]</span></p>
-<p><span class="math display">\[\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})\]</span> Furthermore, probability of resight varied by field effort (<span class="math inline">\(e\)</span>) for nonbreeders and breeders. <span class="math display">\[logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}\]</span> <span class="math display">\[\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})\]</span> Probabilities of emigration (<span class="math inline">\(\delta\)</span>) and dead recovery (<span class="math inline">\(r\)</span>) are contrained to constant values over time to aid with convergence and for computational efficiency. <span class="math display">\[logit(\delta_{i,t})=\mu^{\delta}\]</span> Including emigration within this model allowed us to estimate <em>true</em> survival rather than <em>apparent</em> survival, because apparent survival is confounded with emigration in some CJS models.</p>
+<p><span class="math display">\[\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})\]</span> Furthermore, probability of resight varied by field effort (<span class="math inline">\(e\)</span>) for nonbreeders and breeders. <span class="math display">\[logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}\]</span> <span class="math display">\[\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})\]</span> Probabilities of emigration (<span class="math inline">\(\delta\)</span>) and dead recovery (<span class="math inline">\(r\)</span>) are contrained to constant values over time to aid with convergence and for computational efficiency. <span class="math display">\[logit(\delta_{i,t})=\mu^{\delta}\]</span> Including emigration within this model allowed us to estimate <em>true</em> survival rather than <em>apparent</em> survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models.</p>
 </div>
 </div>
-<div id="implementation-of-the-global-cjs-survival-model" class="section level1">
-<h1>2. Implementation of the Global CJS Survival Model</h1>
+<div id="implementation-of-the-global-multi-state-cjs-survival-model" class="section level1">
+<h1>2. Implementation of the Global Multi-state CJS Survival Model</h1>
 <div id="jags-and-r-code-for-implementing-the-global-cjs-survival-model" class="section level2">
 <h2>2.1 JAGS and R Code for Implementing the Global CJS Survival Model</h2>
 <pre class="r"><code># JAGS must be installed on your computer
@@ -602,6 +607,7 @@ data_summary &lt;- function(x) {
 
 O.surv &lt;- O.rec &lt;- A.surv &lt;- A.rec &lt;- B.surv &lt;- B.rec &lt;- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
 A.resight &lt;- B.resight &lt;-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],3))
+
 ##########################
 # First-year (O) capital letter o, rather than zero so code works 
 #########################
@@ -653,6 +659,7 @@ A.resight[,3]&lt;- (out$sims.list$mu.pA1[,1,1,2] + out$sims.list$mu.pA1[,2,1,2]+
                  out$sims.list$mu.pA1[,1,2,2] + out$sims.list$mu.pA1[,2,2,2])/4 -
               (out$sims.list$mu.pA1[,1,1,1] + out$sims.list$mu.pA1[,2,1,1]+
                 out$sims.list$mu.pA1[,1,2,1] + out$sims.list$mu.pA1[,2,2,1])/4
+
 ##########################
 # Adult Breeders (B)
 #########################
@@ -819,14 +826,14 @@ Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) 
 </div>
 </div>
 </div>
-<div id="implementation-of-the-cjs-survival-model-with-reduced-covariates" class="section level1">
-<h1>3. Implementation of the CJS Survival Model with Reduced Covariates</h1>
+<div id="implementation-of-the-multi-state-cjs-survival-model-with-reduced-covariates" class="section level1">
+<h1>3. Implementation of the Multi-state CJS Survival Model with Reduced Covariates</h1>
 <div id="jags-and-r-code-for-the-cjs-survival-model-with-reduced-covariates" class="section level2">
 <h2>3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates</h2>
-<p>We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates that were not important.</p>
+<p>We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates and parameters that were not important (e.g., emigration).</p>
 <pre class="r"><code># JAGS must be installed on your computer
 library (jagsUI)
-load(&quot;./data/final-data.Rdata&quot;)
+load(&quot;./data/data-7states.Rdata&quot;)
 m&lt;- c(&quot;surv7-jags-reduced&quot;)
 modfl &lt;- paste(&quot;./&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
 sink(modfl)
@@ -1123,7 +1130,11 @@ save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&
 <pre class="r"><code>#################################
 # The model
 ################################
-sink(&quot;Analysis/JAGS models/IPM_reduced_imm_fecfix_effort_reform.txt&quot;)
+library (jagsUI)
+load(&quot;.\\data\\data-4states.Rdata&quot;)
+m&lt;- c(&quot;ipm-jags-imm&quot;)
+modfl &lt;- paste(&quot;.\\&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
+sink(modfl)
 cat(&quot;
     model{
     ####################################################
@@ -1449,27 +1460,14 @@ sink()</code></pre>
 <h1>5. Implementation of the Integrated Population Model without Immigration</h1>
 <div id="jags-and-r-code-for-the-ipm-without-immigration" class="section level2">
 <h2>5.1 JAGS and R Code for the IPM without Immigration</h2>
-<pre class="r"><code>#########################################
-# Set the working drive to science drive
-##############################
-path.df&lt;- data.frame(PCs=NA, Path=NA)
-path.df[1,] &lt;- c(&quot;rolek.brian&quot;, &quot;S:\\&quot;)
-path.df[2,] &lt;- c(&quot;brianrolek&quot;, &quot;/run/user/1002/gvfs/smb-share:server=pfsbs,share=science/&quot;)
-path.df[3,] &lt;- c(&quot;cmcclure&quot;, &quot;S:\\&quot;)
-path.df[4,] &lt;- c(&quot;nutting&quot;, &quot;C:\\Dropbox\\R\\&quot;)
-path.df[5,] &lt;- c(&quot;user&quot;, &quot;C:\\Dropbox\\R\\&quot;)
-ind&lt;- which(path.df$PCs==Sys.info()[&quot;user&quot;])
-if (any(path.df$PCs==Sys.info()[&quot;user&quot;])){ # check PC is in df path.df
-  setwd(path.df$Path[ind]) # if TRUE, set path from df
-}  else {}
-rm(list=c(&quot;path.df&quot;, &quot;ind&quot;))
-setwd(&quot;APFA_IPM&quot;)
-getwd()
-
-#################################
+<pre class="r"><code>#################################
 # The model
 ################################
-sink(&quot;Analysis/JAGS models/IPM_reduced_no imm_fecfix_effort_reform.txt&quot;)
+library (jagsUI)
+load(&quot;.\\data\\data-7states.Rdata&quot;)
+m&lt;- c(&quot;ipm-jags-imm&quot;)
+modfl &lt;- paste(&quot;.\\&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
+sink(modfl)
 cat(&quot;
     model{
     ####################################################
@@ -1781,6 +1779,7 @@ sink()</code></pre>
 <p>Literature cited Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.</p>
 <p>Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.</p>
 <p>Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.</p>
+<p>Krushke, J. K. 2011. Doing Bayesian Data Analysis: A Tutorial with R and BUGS. Elsevier Inc., Burlington, Massachusetts, USA.</p>
 <p>Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.</p>
 </div>
 </div>

@@ -1,25 +1,12 @@
 ## ---- ipm2 --------
-#########################################
-# Set the working drive to science drive
-##############################
-path.df<- data.frame(PCs=NA, Path=NA)
-path.df[1,] <- c("rolek.brian", "S:\\")
-path.df[2,] <- c("brianrolek", "/run/user/1002/gvfs/smb-share:server=pfsbs,share=science/")
-path.df[3,] <- c("cmcclure", "S:\\")
-path.df[4,] <- c("nutting", "C:\\Dropbox\\R\\")
-path.df[5,] <- c("user", "C:\\Dropbox\\R\\")
-ind<- which(path.df$PCs==Sys.info()["user"])
-if (any(path.df$PCs==Sys.info()["user"])){ # check PC is in df path.df
-  setwd(path.df$Path[ind]) # if TRUE, set path from df
-}  else {}
-rm(list=c("path.df", "ind"))
-setwd("APFA_IPM")
-getwd()
-
 #################################
 # The model
 ################################
-sink("Analysis/JAGS models/IPM_reduced_no imm_fecfix_effort_reform.txt")
+library (jagsUI)
+load(".\\data\\data-7states.Rdata")
+m<- c("ipm-jags-imm")
+modfl <- paste(".\\", m, ".txt", sep="")
+sink(modfl)
 cat("
     model{
     ####################################################
