@@ -369,8 +369,20 @@ knitr::read_chunk('04-run-ipm-no-immigration-JAGS.R')
 ```
 ```{r,ipm2, eval=FALSE}
 ```
+## 5.2 Postprocess Model Output  
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('05-Postprocessing.R')
+```
+```{r,ipm postprocess 1, eval=FALSE}
+```
+## 5.3 Plot Differences  
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('05-Postprocessing.R')
+```
+```{r,ipm postprocess 2, eval=FALSE}
+```
 
-Literature cited 
+# 6. Literature cited 
 Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.
 
 Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.
