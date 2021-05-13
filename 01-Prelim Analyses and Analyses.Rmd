@@ -30,7 +30,7 @@ knitr::read_chunk('01-run-survival-global-JAGS.R')
 
 #S1 Supplemental materials   
 for:  
-B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS
+B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
 
 # 1. Multi-state CJS Survival Model Formulation with Emigration
 
@@ -41,21 +41,21 @@ This Rmarkdown document describes preliminary analyses using a Cormack-Jolly-Seb
 First, we specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
 Observed states (1--5, columns left to right):  
 1.  Seen first-year  
-2.  Seen nonbreeder  
+2.  Seen non-breeder  
 3.  Seen breeder  
 4.  Seen dead  
 5.  Not seen  
 
-Real states (1--7, rows top to bottom):  
+True states (1--7, rows top to bottom):  
 1.  First-year  
-2.  Nonbreeder  
+2.  Non-breeder  
 3.  Breeder  
 4.  Recovered recently dead   
 5.  Dead not recovered  
 6.  Emigrated and alive  
 7.  Emigrated and dead  
 
-where superscripts with capital letters are used as labels for life cycle states: first-year ($O$), nonbreeder ($A$), and breeder ($B$). Observations are related to true states using transition and resight probabilities ($p$) for nonbreeder ($p^A$) and breeders ($p^B$):
+where superscripts with capital letters are used as labels for life cycle states: first-year ($O$), non-breeder ($A$), and breeder ($B$). Observations are related to true states using transition and resight probabilities ($p$) for non-breeder ($p^A$) and breeders ($p^B$):
 $$PO=
 \begin{bmatrix} 
 1 & 0 & 0 & 0 & 0\\
@@ -84,13 +84,13 @@ $$ \Omega=
 $$
 
 ## 1.4 Global CJS Survival Model Constraints  
-We implemented the global survival model in Just Another Gibbs Sampler (JAGS). The "global survival model" includes all covariates considered here. Probabilities of survival ($\phi$), recruitment ($\psi$), and resight ($p$) are contrained to vary by sex ($s$, male or female), hacked ($h$, wild-born or captive bred). Each life stage (first-year, nonbreeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, nonbreeder, and breeder birds. Superscripts with greek symbols are used to label parameters. 
+We implemented the global survival model in Just Another Gibbs Sampler (JAGS). The "global survival model" includes all covariates considered here. Probabilities of survival ($\phi$), recruitment ($\psi$), and resight ($p$) are contrained to vary by sex ($s$, male or female), hacked ($h$, wild-born or captive bred). Each life stage (first-year, non-breeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, non-breeder, and breeder birds. Superscripts with greek symbols are used to label parameters. 
 $$logit(\phi_{i,t})=\mu_{s,h}^{\phi} + \epsilon_{s,h,t}^{\phi}$$
 $$\epsilon_{s,h,t}^{\phi}=normal(0,\tau=1/\sigma_{s,h}^{\phi,2})$$ 
 $$logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}$$
 
 $$\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})$$ 
-Furthermore, probability of resight varied by field effort ($e$) for nonbreeders and breeders. 
+Furthermore, probability of resight varied by field effort ($e$) for non-breeders and breeders. 
 $$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}$$
 $$\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})$$ 
 Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to constant values over time to aid with convergence and for computational efficiency. 
@@ -281,14 +281,14 @@ ests$important <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |
 ```
 
 ### 2.2.3 The Importance of Covariates in the Global CJS Survival Model
-We plot the differences in survival, recruitment, and resight probabilities and evaluate their importance when 85% highest density intervals did not intersect zero.
 ```{r survdiffs1, fig.width=10, fig.height=10}
-print(ests)
+library (knitr)
+knitr::kable(ests, caption="Table SX. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians and 95% HDIs. Differences were considered important when 95% highest density intervals did not intersect zero.")
 
 ```
 
  
-```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig SX. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival submodel."}
+```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig SX. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival submodel. Differences were considered important when 95% highest density intervals did not intersect zero."}
 txt <- 30
 lwd <- 1.5
 df.surv$State <- factor(df.surv$State, levels=c("First-year", "Nonbreeder", "Breeder"))
@@ -329,7 +329,7 @@ grid.arrange(ps + theme(legend.position=c(0.5,0.95), legend.direction="horizonta
                                    c(3, 3, 3, 3, 3, 3))) 
 
 ```
-### 2.2.4 The Importance of Emigration
+### 2.2.4 The Importance of Emigration  
 ```{r emigration, fig.width=6, fig.height=4, fig.cap= "Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
 hist(out$sims.list$em, main="Histogram of Emigration", xlab="Posterior draws of emigration")
 abline(v=median(out$sims.list$em), lwd=2)
@@ -352,12 +352,12 @@ knitr::read_chunk('02-run-survival-reduced-JAGS.R')
 We specify the IPM including observation and state trasition matices for the survival submodel in the manuscript. These matrices are identical for IPMs with and without immigration.  
 
 ## 4.1 Formulation of the IPM with Immigration
-This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for nonbreeders and breeders separately. The number of immigrants ($N_{t+1}^{I}$) was specified as  
+This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders separately. The number of immigrants ($N_{t+1}^{I}$) was specified as  
 
 $$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega_{t})$$
 $$log(\omega_{t})=\mu^{\omega}+\epsilon_{t}^{\omega}$$
 $$\epsilon_{t}^{\omega} \sim {\sf normal} (0,\sigma^{\omega})$$
-We did not include immigration of first-year birds because they must be recruited as breeders or nonbreeders during the following post-breeding survey. 
+We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey. 
 
 ## 4.2 JAGS and R Code for the IPM with Immigration  
 
@@ -387,7 +387,9 @@ knitr::read_chunk('05-Postprocessing.R')
 ```{r,ipm postprocess 2, eval=FALSE}
 ```
 
-# 6. Literature cited 
+
+# 6. Literature cited  
+
 Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.
 
 Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.
