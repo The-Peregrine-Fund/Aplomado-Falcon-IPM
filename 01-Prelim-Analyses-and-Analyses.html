@@ -213,7 +213,10 @@ summary {
 </ul></li>
 <li><a href="#implementation-of-the-integrated-population-model-without-immigration">5. Implementation of the Integrated Population Model without Immigration</a><ul>
 <li><a href="#jags-and-r-code-for-the-ipm-without-immigration">5.1 JAGS and R Code for the IPM without Immigration</a></li>
+<li><a href="#postprocess-model-output">5.2 Postprocess Model Output</a></li>
+<li><a href="#plot-differences">5.3 Plot Differences</a></li>
 </ul></li>
+<li><a href="#literature-cited">6. Literature cited</a></li>
 </ul>
 </div>
 
@@ -1131,7 +1134,7 @@ save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&
 # The model
 ################################
 library (jagsUI)
-load(&quot;.\\data\\data-4states.Rdata&quot;)
+load(&quot;.\\data\\data-7states.Rdata&quot;)
 m&lt;- c(&quot;ipm-jags-imm&quot;)
 modfl &lt;- paste(&quot;.\\&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
 sink(modfl)
@@ -1453,7 +1456,11 @@ for (t in 1:(n.yr-1)){
     
     } #model
     &quot;,fill = TRUE)
-sink()</code></pre>
+sink()
+
+# data manip- assign dead recoveries as &quot;not seen&quot;
+datl$y[datl$y==5] &lt;- 4
+datl$z[datl$z==4] &lt;- NA</code></pre>
 </div>
 </div>
 <div id="implementation-of-the-integrated-population-model-without-immigration" class="section level1">
@@ -1776,12 +1783,196 @@ for (t in 1:(n.yr-1)){
     } #model
     &quot;,fill = TRUE)
 sink()</code></pre>
-<p>Literature cited Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.</p>
+</div>
+<div id="postprocess-model-output" class="section level2">
+<h2>5.2 Postprocess Model Output</h2>
+<pre class="r"><code>load(&quot;.\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata&quot;)
+library (jagsUI)
+# plots
+library (ggplot2)
+library (gridExtra)
+# Function to compute highest density interval. From Kruschke 2011.
+source(&quot;HDIofMCMC.R&quot;)
+
+data_summary &lt;- function(x) {
+  m &lt;- median(x)
+  ymin &lt;- HDIofMCMC(x, credMass=0.85)[[1]]
+  ymax &lt;- HDIofMCMC(x, credMass=0.85)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+data_summary2 &lt;- function(x) {
+  m &lt;- median(x)
+  ymin &lt;- HDIofMCMC(x, credMass=0.95)[[1]]
+  ymax &lt;- HDIofMCMC(x, credMass=0.95)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+J.surv &lt;- J.trans &lt;- F.surv &lt;- F.trans &lt;- B.surv &lt;- B.trans &lt;- array(NA, dim=c(dim(out$sims.list$JSalpha1)[1],3))
+B.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
+F.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
+##########################
+# Juveniles
+#########################
+# Survival
+# female - male
+J.surv[,2]&lt;- out$sims.list$JSalpha1[,1] - out$sims.list$JSalpha1[,2] 
+# Recruitment
+# female - male
+J.trans[,2]&lt;- out$sims.list$JBRalpha1[,1] - out$sims.list$JBRalpha1[,2]
+
+##########################
+# Floaters
+#########################
+# Recruitment
+# wild - hacked
+F.trans[,1]&lt;- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,2,1])/2 -
+  (out$sims.list$FBRalpha1[,1,2] + out$sims.list$FBRalpha1[,2,2])/2
+# female - male
+F.trans[,2]&lt;- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,1,2])/2 -
+  (out$sims.list$FBRalpha1[,2,1] + out$sims.list$FBRalpha1[,2,2])/2
+# Recapture prob  
+# wild - hacked
+# mu.pF1 [effort, h]
+F.recap[,1] &lt;- (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,2,1])/2 - 
+              (out$sims.list$mu.pF1[,1,2] + out$sims.list$mu.pF1[,2,2])/2
+# high effort - low effort
+F.recap[,2] &lt;- (out$sims.list$mu.pF1[,2,1] + out$sims.list$mu.pF1[,2,2])/2 - 
+            (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,1,2])/2
+# mu.pB[effort[t]]
+# high effort - low effort
+B.recap[,1] &lt;- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] 
+
+tab &lt;- data.frame(stage= c(&quot;First-year&quot;, &quot;First-year&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Breeder&quot;),
+                  param= c(&quot;Survival&quot;, &quot;Transition&quot;, &quot;Transition&quot;, &quot;Transition&quot;, &quot;Resight&quot;, &quot;Resight&quot;, &quot;Resight&quot;),
+                  comp= c(&quot;Sex&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Effort&quot;, &quot;Effort&quot; ),
+                  median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
+tab[1, 4:6]&lt;- round(data_summary2(J.surv[,2]),3)
+tab[2, 4:6]&lt;- round(data_summary2(J.trans[,2]),3)
+tab[3, 4:6]&lt;- round(data_summary2(F.trans[,1]),3)
+tab[4, 4:6]&lt;- round(data_summary2(F.trans[,2]),3)
+tab[5, 4:6]&lt;- round(data_summary2(F.recap[,1]),3)
+tab[6, 4:6]&lt;- round(data_summary2(F.recap[,2]),3)
+tab[7, 4:6]&lt;- round(data_summary2(B.recap[,1]),3)
+tab$important &lt;- ifelse( ((tab$LHDI95 &gt;= 0 &amp; tab$UHDI95&gt;=0) |
+                             (tab$LHDI95 &lt;= 0 &amp; tab$UHDI95&lt;=0)) &amp;
+                            (tab$LHDI95 != 0 &amp; tab$UHDI95!=0), 
+                          &quot;yes&quot;, &quot;no&quot;) 
+tab$P[1] &lt;- round(sum(J.surv[,2]&gt;0)/length(J.surv[,2]),2)
+tab$P[2] &lt;- round(sum(J.trans[,2]&lt;0)/length(J.trans[,2]),2)
+tab$P[3] &lt;- round(sum(F.trans[,1]&gt;0)/length(F.trans[,1]),2)
+tab$P[4] &lt;- round(sum(F.trans[,2]&lt;0)/length(F.trans[,2]),2)
+tab$P[5] &lt;- round(sum(F.recap[,1]&gt;0)/length(F.recap[,1]),2)
+tab$P[6] &lt;- round(sum(F.recap[,2]&gt;0)/length(F.recap[,2]),2)
+tab$P[7] &lt;- round(sum(B.recap[,1]&gt;0)/length(B.recap[,1]),2)
+print(tab)</code></pre>
+</div>
+<div id="plot-differences" class="section level2">
+<h2>5.3 Plot Differences</h2>
+<pre class="r"><code># combine survival data
+temp.df&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;First-year&quot;)
+temp.df1&lt;- data.frame(Draws=J.surv[,2], Cat=&quot;Sex&quot;, State=&quot;First-year&quot;)
+temp.df2&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Breeder&quot;)
+temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;)
+temp.df4&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Nonbreeder&quot;)
+temp.df5&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Nonbreeder&quot;)
+df.surv&lt;- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.surv$combined&lt;- factor(paste(df.surv$State, df.surv$Cat))
+df.surv$combined &lt;- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
+
+# combine transitions data
+temp.df&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;First-year&quot;)
+temp.df1&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;First-year&quot;)
+temp.df2&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Breeder&quot;)
+temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;)
+temp.df4&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Nonbreeder&quot;)
+temp.df5&lt;- data.frame(Draws=F.trans[,2], Cat=&quot;Sex&quot;, State=&quot;Nonbreeder&quot;)
+df.trans&lt;- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.trans$combined&lt;- factor(paste(df.trans$State, df.trans$Cat))
+df.trans$combined &lt;- factor(df.trans$combined, levels=levels(df.trans$combined)[c(3,4,5,6,1,2)])
+
+# combine resight data
+temp.df2&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Breeder&quot;)
+temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;)
+temp.df4&lt;- data.frame(Draws=B.recap[,1], Cat=&quot;Effort&quot;, State=&quot;Breeder&quot;)
+temp.df5&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Nonbreeder&quot;)
+temp.df6&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Nonbreeder&quot;)
+temp.df7&lt;- data.frame(Draws=F.recap[,2], Cat=&quot;Effort&quot;, State=&quot;Nonbreeder&quot;)
+df.recap&lt;- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
+df.recap$combined&lt;- factor(paste(df.recap$State, df.recap$Cat))
+df.recap$combined &lt;- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #&quot;Juvenile Hacked&quot;, &quot;Juvenile Sex&quot;, 
+
+# plots
+library (ggplot2)
+library (gridExtra)
+source(&quot;HDIofMCMC.R&quot;)
+data_summary &lt;- function(x) {
+  m &lt;- median(x)
+  ymin &lt;- HDIofMCMC(x, credMass=0.85)[[1]]
+  ymax &lt;- HDIofMCMC(x, credMass=0.85)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+data_summary2 &lt;- function(x) {
+  m &lt;- median(x)
+  ymin &lt;- HDIofMCMC(x, credMass=0.95)[[1]]
+  ymax &lt;- HDIofMCMC(x, credMass=0.95)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+txt &lt;- 30
+lwd &lt;- 2
+lwd2 &lt;- 1
+
+ps &lt;- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
+  geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
+  geom_violin(aes(fill=State)) + scale_fill_manual(values=c(&quot;#f7f7f7&quot;, &quot;#cccccc&quot;, &quot;#969696&quot;)) +
+  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  theme_classic() + theme (text = element_text(size=txt)) +  
+  ylab(&quot;Survival \ndifference&quot;) + xlab (&quot;&quot;) +
+  scale_x_discrete( labels=c(&quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;,&quot;Hacked&quot;, &quot;Sex&quot; )) 
+
+pt &lt;- ggplot(df.trans, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
+  geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c(&quot;#f7f7f7&quot;, &quot;#cccccc&quot;, &quot;#969696&quot;), drop=F) + 
+  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  theme_classic() + theme (text = element_text(size=txt)) +
+  ylab(&quot;Recruitment \ndifference&quot;) + xlab (&quot;&quot;) + 
+  scale_x_discrete( labels=c(&quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;,&quot;Hacked&quot;, &quot;Sex&quot; ))
+
+pr &lt;- ggplot(df.recap, aes(x = combined, y = Draws, group=combined)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5, 1),  labels=c(-0.5, 0, 0.5, 1), limits = c(-0.6, 1.0)) +
+  geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c( &quot;#cccccc&quot;, &quot;#969696&quot; )) +
+  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  theme_classic() + theme (text = element_text(size=txt)) +
+  ylab(&quot;Resight \ndifference&quot;) + xlab (&quot;&quot;) + 
+  scale_x_discrete( labels=c(&quot;Effort&quot;, &quot;Hacked&quot;, &quot;Sex&quot;, &quot;Effort&quot;, &quot;Hacked&quot;, &quot;Sex&quot; )) 
+
+
+png(&quot;.//figs//SurvivalDiffs_IPM_Reduced_19_Sept_2019.png&quot;, height=800, width=800)
+grid.arrange(ps + theme(legend.position=&quot;none&quot;), 
+             pt + theme(legend.position=c(0.8, 0.9)), 
+             pr + theme(legend.position=&quot;none&quot;), 
+             nrow=3,
+             layout_matrix = rbind(c(1, 1, 1, 1, 1, 1),
+                                   c(2, 2, 2, 2, 2, 2),
+                                   c(3, 3, 3, 3, 3, 3))) 
+dev.off()</code></pre>
+</div>
+</div>
+<div id="literature-cited" class="section level1">
+<h1>6. Literature cited</h1>
+<p>Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.</p>
 <p>Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, and R. Pradel. 2007. State-space modelling of data on marked individuals. Ecological Modelling 206:431–438.</p>
 <p>Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.</p>
 <p>Krushke, J. K. 2011. Doing Bayesian Data Analysis: A Tutorial with R and BUGS. Elsevier Inc., Burlington, Massachusetts, USA.</p>
 <p>Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.</p>
-</div>
 </div>
 
 

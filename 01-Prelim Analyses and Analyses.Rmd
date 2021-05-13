@@ -374,6 +374,19 @@ knitr::read_chunk('04-run-ipm-no-immigration-JAGS.R')
 ```
 ```{r,ipm2, eval=FALSE}
 ```
+## 5.2 Postprocess Model Output  
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('05-Postprocessing.R')
+```
+```{r,ipm postprocess 1, eval=FALSE}
+```
+## 5.3 Plot Differences  
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('05-Postprocessing.R')
+```
+```{r,ipm postprocess 2, eval=FALSE}
+```
+
 
 # 6. Literature cited  
 

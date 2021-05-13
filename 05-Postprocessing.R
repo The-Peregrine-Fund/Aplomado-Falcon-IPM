@@ -5,19 +5,7 @@ library (jagsUI)
 library (ggplot2)
 library (gridExtra)
 # Function to compute highest density interval. From Kruschke 2011.
-HDIofMCMC = function( sampleVec , credMass=0.95 ) {
-  sortedPts = sort( sampleVec )
-  ciIdxInc = floor( credMass * length( sortedPts ) )
-  nCIs = length( sortedPts ) - ciIdxInc
-  ciWidth = rep( 0 , nCIs )
-  for ( i in 1:nCIs ) {
-    ciWidth[ i ] = sortedPts[ i + ciIdxInc ] - sortedPts[ i ]
-  }
-  HDImin = sortedPts[ which.min( ciWidth ) ]
-  HDImax = sortedPts[ which.min( ciWidth ) + ciIdxInc ]
-  HDIlim = c( HDImin , HDImax )
-  return( HDIlim )
-}
+source("HDIofMCMC.R")
 
 data_summary <- function(x) {
   m <- median(x)
@@ -71,34 +59,46 @@ B.recap[,1] <- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1]
 tab <- data.frame(stage= c("First-year", "First-year", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Breeder"),
                   param= c("Survival", "Transition", "Transition", "Transition", "Resight", "Resight", "Resight"),
                   comp= c("Sex", "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
-                  median=NA, LHDI85=NA, UHDI85=NA)
-tab[1, 4:6]<- round(data_summary(J.surv[,2]),3)
-tab[2, 4:6]<- round(data_summary(J.trans[,2]),3)
-tab[3, 4:6]<- round(data_summary(F.trans[,1]),3)
-tab[4, 4:6]<- round(data_summary(F.trans[,2]),3)
-tab[5, 4:6]<- round(data_summary(F.recap[,1]),3)
-tab[6, 4:6]<- round(data_summary(F.recap[,2]),3)
-tab[7, 4:6]<- round(data_summary(B.recap[,1]),3)
+                  median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
+tab[1, 4:6]<- round(data_summary2(J.surv[,2]),3)
+tab[2, 4:6]<- round(data_summary2(J.trans[,2]),3)
+tab[3, 4:6]<- round(data_summary2(F.trans[,1]),3)
+tab[4, 4:6]<- round(data_summary2(F.trans[,2]),3)
+tab[5, 4:6]<- round(data_summary2(F.recap[,1]),3)
+tab[6, 4:6]<- round(data_summary2(F.recap[,2]),3)
+tab[7, 4:6]<- round(data_summary2(B.recap[,1]),3)
+tab$important <- ifelse( ((tab$LHDI95 >= 0 & tab$UHDI95>=0) |
+                             (tab$LHDI95 <= 0 & tab$UHDI95<=0)) &
+                            (tab$LHDI95 != 0 & tab$UHDI95!=0), 
+                          "yes", "no") 
+tab$P[1] <- round(sum(J.surv[,2]>0)/length(J.surv[,2]),2)
+tab$P[2] <- round(sum(J.trans[,2]<0)/length(J.trans[,2]),2)
+tab$P[3] <- round(sum(F.trans[,1]>0)/length(F.trans[,1]),2)
+tab$P[4] <- round(sum(F.trans[,2]<0)/length(F.trans[,2]),2)
+tab$P[5] <- round(sum(F.recap[,1]>0)/length(F.recap[,1]),2)
+tab$P[6] <- round(sum(F.recap[,2]>0)/length(F.recap[,2]),2)
+tab$P[7] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
+print(tab)
 
-
+## ---- ipm postprocess 2 --------
 # combine survival data
 temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=J.surv[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
-temp.df4<- data.frame(Draws=0, Cat="Hacked", State="Nonbreeder")
-temp.df5<- data.frame(Draws=0, Cat="Sex", State="Nonbreeder")
+temp.df4<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
+temp.df5<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
 df.surv<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
 df.surv$combined<- factor(paste(df.surv$State, df.surv$Cat))
 df.surv$combined <- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
 
 # combine transitions data
 temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
-temp.df1<- data.frame(Draws=J.trans[,2], Cat="Sex", State="First-year")
+temp.df1<- data.frame(Draws=0, Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
-temp.df4<- data.frame(Draws=F.trans[,1], Cat="Hacked", State="Nonbreeder")
-temp.df5<- data.frame(Draws=F.trans[,2], Cat="Sex", State="Nonbreeder")
+temp.df4<- data.frame(Draws=F.trans[,1], Cat="Hacked", State="Non-breeder")
+temp.df5<- data.frame(Draws=F.trans[,2], Cat="Sex", State="Non-breeder")
 df.trans<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
 df.trans$combined<- factor(paste(df.trans$State, df.trans$Cat))
 df.trans$combined <- factor(df.trans$combined, levels=levels(df.trans$combined)[c(3,4,5,6,1,2)])
@@ -107,12 +107,17 @@ df.trans$combined <- factor(df.trans$combined, levels=levels(df.trans$combined)[
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=B.recap[,1], Cat="Effort", State="Breeder")
-temp.df5<- data.frame(Draws=F.recap[,1], Cat="Hacked", State="Nonbreeder")
-temp.df6<- data.frame(Draws=0, Cat="Sex", State="Nonbreeder")
-temp.df7<- data.frame(Draws=F.recap[,2], Cat="Effort", State="Nonbreeder")
+temp.df5<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
+temp.df6<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
+temp.df7<- data.frame(Draws=F.recap[,2], Cat="Effort", State="Non-breeder")
 df.recap<- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
 df.recap$combined<- factor(paste(df.recap$State, df.recap$Cat))
 df.recap$combined <- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #"Juvenile Hacked", "Juvenile Sex", 
+# fix level order for plots
+ord <- c("First-year","Non-breeder","Breeder")
+df.surv$State <-  factor(df.surv$State, levels=ord, labels=ord) 
+df.trans$State <-  factor(df.trans$State, levels=ord, labels=ord) 
+df.recap$State <-  factor(df.recap$State, levels=ord[-1], labels=ord[-1]) 
 
 # plots
 library (ggplot2)
@@ -132,45 +137,49 @@ data_summary2 <- function(x) {
   return(c(y=m,ymin=ymin,ymax=ymax))
 }
 
-## ---- ipm postprocess 2 --------
 txt <- 30
 lwd <- 2
 lwd2 <- 1
 
+colors <- c("First-year" = "#f7f7f7", "Non-breeder" = "#cccccc", "Breeder" = "#969696")
+
 ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) + scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) +
+  geom_violin(aes(fill=State)) + scale_fill_manual(values=colors) +
   stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +  
   ylab("Survival \ndifference") + xlab ("") +
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) 
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) + 
+  facet_wrap(~State, scales="free")
 
 pt <- ggplot(df.trans, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696"), drop=F) + 
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values= colors, drop=F) + 
   stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Recruitment \ndifference") + xlab ("") + 
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" ))
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) + 
+  facet_wrap(~State, scales="free")
 
 pr <- ggplot(df.recap, aes(x = combined, y = Draws, group=combined)) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5, 1),  labels=c(-0.5, 0, 0.5, 1), limits = c(-0.6, 1.0)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c( "#cccccc", "#969696" )) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=colors[-1]) +
   stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Resight \ndifference") + xlab ("") + 
-  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) 
+  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) + 
+  facet_wrap(~State, scales="free")
 
 
-png(".//figs//SurvivalDiffs_IPM_Reduced_19_Sept_2019.png", height=800, width=800)
+png(".//figs//SurvivalDiffs_IPM_Reduced.png", height=800, width=800)
 grid.arrange(ps + theme(legend.position="none"), 
-             pt + theme(legend.position=c(0.8, 0.9)), 
+             pt + theme(legend.position="none"), 
              pr + theme(legend.position="none"), 
              nrow=3,
              layout_matrix = rbind(c(1, 1, 1, 1, 1, 1),
@@ -178,21 +187,7 @@ grid.arrange(ps + theme(legend.position="none"),
                                    c(3, 3, 3, 3, 3, 3))) 
 dev.off()
 
-for (i in 1:2){
-  print(HDIofMCMC(J.surv[,i], credMass=0.85))
-  print(HDIofMCMC(F.surv[,i], credMass=0.85))
-  print(HDIofMCMC(B.surv[,i], credMass=0.85))
-}
-for (i in 1:2){
-  print(HDIofMCMC(J.trans[,i], credMass=0.85))
-  print(HDIofMCMC(F.trans[,i], credMass=0.85))
-  print(HDIofMCMC(B.trans[,i], credMass=0.85))
-}
-for (i in 1:2){
-  print(HDIofMCMC(F.recap[,i], credMass=0.85))
-  print(HDIofMCMC(B.recap[,i], credMass=0.85))
-}
-
+## ---- ipm postprocess 3 --------
 ########################
 # Plot mean estimates with 95% HDIs 
 #######################
