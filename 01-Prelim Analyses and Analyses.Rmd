@@ -1,5 +1,5 @@
 ---
-title: "Preliminary Analyses of Survival, Recruitment, Resight, and Emigration"
+title: "Estimating Aplomado Falcon Vital Rates using Cormack-Jolly-Seber and Integrated Population Models"
 knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
@@ -32,13 +32,13 @@ knitr::read_chunk('01-run-survival-global-JAGS.R')
 for:  
 B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
 
-# 1. Multi-state CJS Survival Model Formulation with Emigration
+# 1. Formulation of Multi-state Cormack-Jolly-Seber (CJS) Submodel with Emigration
 
 ## 1.1 Introduction
-This Rmarkdown document describes preliminary analyses using a Cormack-Jolly-Seber model with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008). These analyses assess the importance of covariates for later inclusion in the integrated population model (IPM), and assess the importance of emigration for inclusion in the IPM. 
+This document describes analyses using a CJS submodel with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008) and integrated population models (IPMs). First, we describe preliminary analyses that assessed the importance of group covariates (sex, hacked, effort) for inclusion in the final IPM, and assess the importance of emigration for inclusion in the IPM (Sections 1,2, and 3). Next, we use an IPM to evaluate the importance of including immigration (Section 4). Lastly, we implement analyses of the IPM to gain inference about vital rates of Aplomado Falcon (Section 5). 
 
 ## 1.2 Observation Matrix  
-First, we specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
+We specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
 Observed states (1--5, columns left to right):  
 1.  Seen first-year  
 2.  Seen non-breeder  
@@ -83,29 +83,29 @@ $$ \Omega=
 \end{bmatrix}
 $$
 
-## 1.4 Global CJS Survival Model Constraints  
-We implemented the global survival model in Just Another Gibbs Sampler (JAGS). The "global survival model" includes all covariates considered here. Probabilities of survival ($\phi$), recruitment ($\psi$), and resight ($p$) are contrained to vary by sex ($s$, male or female), hacked ($h$, wild-born or captive bred). Each life stage (first-year, non-breeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, non-breeder, and breeder birds. Superscripts with greek symbols are used to label parameters. 
+## 1.4 CJS Submodel with Global Constraints (Includes All Group Covariates)  
+We implemented the global CJS submodel in Just Another Gibbs Sampler (JAGS). The "global survival model" includes all covariates considered here. Probabilities of survival ($\phi$), recruitment ($\psi$), and resight ($p$) are contrained to vary by sex ($s$, male or female), hacked ($h$, wild-born or captive bred). Each life stage (first-year, non-breeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, non-breeder, and breeder birds. Superscripts with greek symbols are used to label parameters. 
 $$logit(\phi_{i,t})=\mu_{s,h}^{\phi} + \epsilon_{s,h,t}^{\phi}$$
 $$\epsilon_{s,h,t}^{\phi}=normal(0,\tau=1/\sigma_{s,h}^{\phi,2})$$ 
 $$logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}$$
 
 $$\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})$$ 
-Furthermore, probability of resight varied by field effort ($e$) for non-breeders and breeders. 
+Furthermore, probability of resight varied by survey effort ($e$) for non-breeders and breeders. 
 $$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}$$
 $$\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})$$ 
 Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to constant values over time to aid with convergence and for computational efficiency. 
 $$logit(\delta_{i,t})=\mu^{\delta}$$
 Including emigration within this model allowed us to estimate _true_ survival rather than _apparent_ survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models. 
 
-# 2. Implementation of the Global Multi-state CJS Survival Model
+# 2. Implementation of the Multi-state CJS Submodel with Global Constraints
 
-## 2.1 JAGS and R Code for Implementing the Global CJS Survival Model  
+## 2.1 JAGS and R Code for Implementing the CJS Submodel with Global Constraints
 
 ```{r, global, eval=FALSE}
 ```
 
 ## 2.2 Postprocess Global Model
-We postprocess the output from JAGS to compare sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.  
+We postprocess the output from JAGS toexamine differences between sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.  
 
 ### 2.2.1 Functions to Summarize Posterior Distritbutions
 ```{r funcs, message=FALSE}
@@ -140,7 +140,7 @@ data_summary <- function(x) {
 
 ### 2.2.2 Calculate Differences Between Groups  
 
-We load the results from the global model to assess which covariates had important effects on parameters. 
+We load the results from the global submodel to assess which covariates had important effects on parameters. 
 ```{r ppsurvival, eval=TRUE}
 load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\surv7-jags-global.Rdata")
 
@@ -280,7 +280,7 @@ ests$important <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |
                          "yes", "no") 
 ```
 
-### 2.2.3 The Importance of Covariates in the Global CJS Survival Model
+### 2.2.3 The Importance of Covariates in the CJS Submodel with Global Constraints
 ```{r survdiffs1, fig.width=10, fig.height=10}
 library (knitr)
 knitr::kable(ests, caption="Table SX. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians and 95% HDIs. Differences were considered important when 95% highest density intervals did not intersect zero.")
@@ -338,10 +338,10 @@ median(out$sims.list$em)
 HDIofMCMC(out$sims.list$em, cred=0.95)
 
 ```
-# 3. Implementation of the Multi-state CJS Survival Model with Reduced Covariates  
+# 3. Implementation of the Multi-state CJS Submodel with Reduced Covariates  
 
-## 3.1 JAGS and R Code for the CJS Survival Model with Reduced Covariates
-We reduce the number of covariates using probability of direction calculations from the global model. We reduce the survival model, by eliminating covariates and parameters that were not important (e.g., emigration). 
+## 3.1 JAGS and R Code for the CJS Submodel with Reduced Covariates
+We reduced the number of covariates using probability of direction calculations from the global model by eliminating covariates and parameters that were not important (e.g., emigration). 
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('02-run-survival-reduced-JAGS.R')
 ```
@@ -349,7 +349,7 @@ knitr::read_chunk('02-run-survival-reduced-JAGS.R')
 ```
 
 # 4. Implementation of the Integrated Population Model with Immigration  
-We specify the IPM including observation and state trasition matices for the survival submodel in the manuscript. These matrices are identical for IPMs with and without immigration.  
+We specify the IPM including observation and state trasition matices for the survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
 
 ## 4.1 Formulation of the IPM with Immigration
 This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders separately. The number of immigrants ($N_{t+1}^{I}$) was specified as  
@@ -367,7 +367,7 @@ knitr::read_chunk('03-run-ipm-immigration-JAGS.R')
 ```{r,ipm1, eval=FALSE}
 ```
 
-# 5. Implementation of the Integrated Population Model without Immigration 
+# 5. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates
 ## 5.1 JAGS and R Code for the IPM without Immigration 
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('04-run-ipm-no-immigration-JAGS.R')
