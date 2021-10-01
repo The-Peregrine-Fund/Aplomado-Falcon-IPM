@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Brian W. Rolek"
-date: "April 19, 2021"
+date: "01 October 2021"
 output:
   html_document:
     df_print: paged
@@ -21,6 +21,7 @@ output:
 }
 </style>
 
+
 ```{r setup, include=FALSE, error=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -28,9 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::read_chunk('01-run-survival-global-JAGS.R')
 ```
 
-#S1 Supplemental materials   
-for:  
-B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
+Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
 
 # 1. Formulation of Multi-state Cormack-Jolly-Seber (CJS) Submodel with Emigration
 
@@ -283,12 +282,12 @@ ests$important <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |
 ### 2.2.3 The Importance of Covariates in the CJS Submodel with Global Constraints
 ```{r survdiffs1, fig.width=10, fig.height=10}
 library (knitr)
-knitr::kable(ests, caption="Table SX. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians and 95% HDIs. Differences were considered important when 95% highest density intervals did not intersect zero.")
+knitr::kable(ests, caption="Table S1. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians and 95% HDIs. Differences were considered important when 95% highest density intervals did not intersect zero.")
 
 ```
 
  
-```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig SX. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival submodel. Differences were considered important when 95% highest density intervals did not intersect zero."}
+```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig. S1. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival submodel. Differences were considered important when 95% highest density intervals did not intersect zero."}
 txt <- 30
 lwd <- 1.5
 df.surv$State <- factor(df.surv$State, levels=c("First-year", "Nonbreeder", "Breeder"))
@@ -330,7 +329,7 @@ grid.arrange(ps + theme(legend.position=c(0.5,0.95), legend.direction="horizonta
 
 ```
 ### 2.2.4 The Importance of Emigration  
-```{r emigration, fig.width=6, fig.height=4, fig.cap= "Fig SX. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
+```{r emigration, fig.width=6, fig.height=4, fig.cap= "Fig. S2. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
 hist(out$sims.list$em, main="Histogram of Emigration", xlab="Posterior draws of emigration")
 abline(v=median(out$sims.list$em), lwd=2)
 abline(v=HDIofMCMC(out$sims.list$em, cred=0.95), lty=2, lwd=2)
@@ -387,8 +386,63 @@ knitr::read_chunk('05-Postprocessing.R')
 ```{r,ipm postprocess 2, eval=FALSE}
 ```
 
+# 6. Compare survival estimates from IPMs
 
-# 6. Literature cited  
+```{r comp surv IPMs, fig.width=6, fig.height=4, fig.cap= "Fig. S3. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration."}
+## ---- comp surv --------
+load(".\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata")
+outi <- out
+load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
+library (MCMCvis)
+library (ggplot2)
+library(tidybayes)
+library (tidyr)
+oji <- as.data.frame(outi$sims.list$JSalpha1)
+ojil <- oji %>% pivot_longer(cols=c(1,2))
+ofi <- as.data.frame(outi$sims.list$FSalpha1)
+obi <- as.data.frame(outi$sims.list$BSalpha1)
+
+# thin posteriors so they have equal lengths
+keep <- seq(1, 27000, by=9)
+oj <- as.data.frame(out$sims.list$JSalpha1[keep, ])
+ojl <- oj %>% pivot_longer(cols=c(1,2))
+of <- as.data.frame(out$sims.list$FSalpha1[keep])
+ob <- as.data.frame(out$sims.list$BSalpha1[keep])
+
+ojil <- oji %>% pivot_longer(cols=c(1,2))
+ojil$cat <- ifelse(ojil$name=="V1", "female", "male")
+ojl <- oj %>% pivot_longer(cols=c(1,2))
+ojl$cat <- ifelse(ojl$name=="V1", "female", "male")
+ofi$cat <- obi$cat <- of$cat <- ob$cat <- "all"
+ojil$model <- "Immigration"
+ofi$model <- "Immigration"
+obi$model <- "Immigration"
+ojl$model <- "No immigration"
+of$model <- "No immigration"
+ob$model <- "No immigration"
+
+ojil$stage <- paste("First-year", ojil$cat)
+ojl$stage <- paste("First-year", ojl$cat) 
+ofi$stage <- of$stage <- "Nonbreeder"
+obi$stage <- ob$stage <- "Breeder"
+
+ojil <- ojil[,-1] 
+ojl <- ojl[,-1]
+colnames(ofi)[1] <- colnames(of)[1] <- 
+colnames(obi)[1] <- colnames(ob)[1] <- "value"
+
+df <- rbind(ojil, ojl, ofi, of, obi, ob)
+
+plt<- df %>%
+  ggplot(aes(x = value, y = model, colors=model)) +
+  stat_halfeye() +
+  facet_wrap(facets="stage", scales="free") +
+  theme_classic() +
+  ylab("Density") + xlab("Survival probability")
+plt
+```
+
+# 7. Literature cited  
 
 Abadi, F., O. Gimenez, B. Ullrich, R. Arlettaz, and M. Schaub. 2010. Estimation of immigration rate using integrated population models. Journal of Applied Ecology 47:393–400.
 

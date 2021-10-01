@@ -11,13 +11,13 @@ cat("
     ####################################################
     ####################################################
     # Mark-resight-recovery data
-    #   Observations (O) = y  
+    #   Observations (po) = y  
     #     1 seen first year (age 0)
     #     2 seen nonbreeder
     #     3 seen breeder
     #     4 recovered dead
     #     5 not seen
-    #   States (S)
+    #   States (ps)
     #     1 alive first year
     #     2 alive nonbreeder
     #     3 alive breeder

@@ -1,3 +1,4 @@
+## ---- comp surv --------
 load("G:\\APLO_IPM\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata")
 outi <- out
 load("G:\\APLO_IPM\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
