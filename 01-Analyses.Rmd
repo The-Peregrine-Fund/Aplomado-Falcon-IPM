@@ -1,5 +1,5 @@
 ---
-title: "Estimating Aplomado Falcon Vital Rates using Cormack-Jolly-Seber and Integrated Population Models"
+title: "Appendix S1. Estimating Aplomado Falcon Vital Rates using Cormack-Jolly-Seber and Integrated Population Models"
 knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
