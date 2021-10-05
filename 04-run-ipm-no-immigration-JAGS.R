@@ -4,77 +4,79 @@
 ################################
 library (jagsUI)
 load(".\\data\\data-7states.Rdata")
-m<- c("ipm-jags-imm")
+m<- c("ipm-jags-no-imm")
 modfl <- paste(".\\", m, ".txt", sep="")
 sink(modfl)
 cat("
     model{
     ####################################################
-    # DATA
-    # Counts
-    #  log counts of breeders = l.countBM
-    #  log counts of floaters (nonbreeders) = l.countFM
-    #  log counts of first year = l.countJM
-    # Survival
-    # Observations (O) = y  
-    # 1 seen Juvenile
-    # 2 seen Floater (nonbreeder)
-    # 3 seen Breeder
-    # 4 not seen
-    # States (S)
-    # 1 alive Juvenile
-    # 2 alive Floater (nonbreeder)
-    # 3 alive Breeder
-    # 4 dead
-    # Groups
-    # 1 wild born
-    # 2 hacked
-    # Sex
-    # 1 Female
-    # 2 Male
-    # Effort
-    # 1 Low
-    # 2 High
-    # Productivity = prod
+    ####################################################
+    # Mark-resight-recovery data
+    #   Observations (po) = y  
+    #     1 seen first year (age 0)
+    #     2 seen nonbreeder
+    #     3 seen breeder
+    #     4 recovered dead
+    #     5 not seen
+    #   States (ps)
+    #     1 alive first year
+    #     2 alive nonbreeder
+    #     3 alive breeder
+    #     4 dead
+    #     5 dead not recovered
+    #     6 emigrated alive
+    #     7 emigrated dead
+    #   Groups
+    #     1 wild born
+    #     2 hacked
+    #   Sex
+    #     1 female
+    #     2 male
+    #   Effort
+    #     1 low
+    #     2 high
     ###################################################
     # PARAMETERS
-    # F: fecundity
-    # phiJ: survival probability First Year (juvenile)
-    # phiF: survival probability floaters (nonbreeders)
-    # phiB: survival probability breeders
-    # psiJB: movement probability from First Year (juvenile) to Breeder
-    # psiFB: movement probability from Floater (nonbreeders) to Breeder
-    # psiBF: movement probability from Breeder to Floater (nonbreeders) 
-    # pJ: resight probability First Year (juvenile)
-    # pF: resight probability Floater (nonbreeders)
-    # pB: resight probability Breeder
+    #   sO: survival probability first year 
+    #       (this is the letter 'O' rather than zero so jags can parse)
+    #   sA: survival probability nonbreeders
+    #   sB: survival probability breeders
+    #   psiOB: recruitment probability from first-year to breeder
+    #   psiAB: recruitment probability from nonbreeders to breeder
+    #   psiBA: recruitment probability from breeder to nonbreeders 
+    #   pO: resight probability first-year
+    #   pA: resight probability nonbreeders
+    #   pB: resight probability breeder
+    #   em: probability of emigration
+    #   r: probability of dead recovery
+    #   F: fecundity
+    #   omega: immigration
     ###################################################
-    ##############
     # Priors and constraints
-    ##############
+    ###################################################
     # Counts for first year are known with certainty
-    N[1,1] <- 0 # Juvs
-    N[2,1] <- 0 # Juvs to nonbreeder
-    N[3,1] <- 0  # Juvs to breeders
+    N[1,1] <- 0 # First-year
+    N[2,1] <- 0 # First-year to nonbreeder
+    N[3,1] <- 0  # First-year to breeders
     N[4,1] <- 0  # Nonbreeder wild to nonbreeder
     N[5,1] <- 0  # Nonbreeder wild to breeders
     N[6,1] <- 0  # Breeders to nonbreeder
     N[7,1] <- 0  # Breeders to breeders
-    N[8,1] <- 0  # Wild juvs
+    N[8,1] <- 0  # Wild First-year
     N[9,1] <- 0  # Nonbreeder hacked to nonbreeder
     N[10,1] <- 0  # Nonbreeder hacked to breeder
-    F[1] <- 0 # No breeding first year, all hacked birds
+    F[1] <- 0 # No breeding during the first year, all hacked birds
 
     sigma.BM ~ dunif(0,10)
-    sigma.FM ~ dunif(0,10) 
-    sigma.JM ~ dunif(0,10) 
+    sigma.AM ~ dunif(0,10) 
+    sigma.OM ~ dunif(0,10) 
     sigma.prod ~dunif(0,10)
 
     tau.BM <- 1/(sigma.BM*sigma.BM)
-    tau.FM <- 1/(sigma.FM*sigma.FM)
-    tau.JM <- 1/(sigma.JM*sigma.JM)    
+    tau.AM <- 1/(sigma.AM*sigma.AM)
+    tau.OM <- 1/(sigma.OM*sigma.OM)    
     # tau.omegaB <- 1/(sigma.omegaB*sigma.omegaB)
-    # tau.omegaF <- 1/(sigma.omegaF*sigma.omegaF)
+    # tau.omegaA <- 1/(sigma.omegaA*sigma.omegaA)
     for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, tau.prod)  } #j
     tau.prod <- 1/(sigma.prod*sigma.prod)
 
@@ -85,20 +87,20 @@ cat("
   } # m
     
     # Survival 
-    tau.FS.phi <- 1/(sigma.FS.phi*sigma.FS.phi)
-    sigma.FS.phi ~ dunif(0,10)
-    FSalpha <- logit(FSalpha1)
-    FSalpha1 ~ dunif(0, 1)
+    tau.AS.phi <- 1/(sigma.AS.phi*sigma.AS.phi)
+    sigma.AS.phi ~ dunif(0,10)
+    ASalpha <- logit(ASalpha1)
+    ASalpha1 ~ dunif(0, 1)
     
     tau.BS.phi <- 1/(sigma.BS.phi*sigma.BS.phi)
     sigma.BS.phi ~ dunif(0,10)
     BSalpha <- logit(BSalpha1) 
     BSalpha1 ~ dunif(0, 1)
     
-    tau.BFR.psi <- 1/(sigma.BFR.psi*sigma.BFR.psi)
-    sigma.BFR.psi ~ dunif(0,10)
-    BFRalpha <- logit(BFRalpha1)
-    BFRalpha1 ~ dunif(0, 1)
+    tau.BAR.psi <- 1/(sigma.BAR.psi*sigma.BAR.psi)
+    sigma.BAR.psi ~ dunif(0,10)
+    BARalpha <- logit(BARalpha1)
+    BARalpha1 ~ dunif(0, 1)
     
     tau.pB <- 1/(sigma.pB*sigma.pB)
     sigma.pB ~ dunif(0,10)
@@ -109,61 +111,61 @@ for (k in 1:2){
 } # k
 
     for (t in 1:(n.yr-1)){
-    logit(eta.FSalpha[t]) <- FSalpha + eps.FS.phi[t]
-    eps.FS.phi[t] ~ dnorm(0, tau.FS.phi)
+    logit(eta.ASalpha[t]) <- ASalpha + eps.AS.phi[t]
+    eps.AS.phi[t] ~ dnorm(0, tau.AS.phi)
     
     logit(eta.BSalpha[t]) <- BSalpha + eps.BS.phi[t]
     eps.BS.phi[t] ~ dnorm(0, tau.BS.phi)    
     
-    logit(eta.BFRalpha[t]) <- BFRalpha + eps.BFR.psi[t]
-    eps.BFR.psi[t] ~ dnorm(0, tau.BFR.psi)
+    logit(eta.BARalpha[t]) <- BARalpha + eps.BAR.psi[t]
+    eps.BAR.psi[t] ~ dnorm(0, tau.BAR.psi)
 
     logit(eta.pB[t]) <- mu.pB[effort[t]] + eps.pB[t]
     eps.pB[t] ~ dnorm(0, tau.pB)
     } #t
     
     for(s in 1:2){
-    tau.JS.phi[s] <- 1/(sigma.JS.phi[s]*sigma.JS.phi[s])
-    sigma.JS.phi[s] ~ dunif(0,10)
-    JSalpha[s] <- logit(JSalpha1[s]) 
-    JSalpha1[s] ~ dunif(0, 1)
+    tau.OS.phi[s] <- 1/(sigma.OS.phi[s]*sigma.OS.phi[s])
+    sigma.OS.phi[s] ~ dunif(0,10)
+    OSalpha[s] <- logit(OSalpha1[s]) 
+    OSalpha1[s] ~ dunif(0, 1)
     
-    tau.JBR.psi[s] <- 1/(sigma.JBR.psi[s]*sigma.JBR.psi[s])
-    sigma.JBR.psi[s] ~ dunif(0,10)
-    JBRalpha[s] <- logit(JBRalpha1[s]) 
-    JBRalpha1[s] ~ dunif(0, 1)
+    tau.OBR.psi[s] <- 1/(sigma.OBR.psi[s]*sigma.OBR.psi[s])
+    sigma.OBR.psi[s] ~ dunif(0,10)
+    OBRalpha[s] <- logit(OBRalpha1[s]) 
+    OBRalpha1[s] ~ dunif(0, 1)
     
     for (t in 1:(n.yr-1)){
-    logit(eta.JSalpha[s,t]) <- JSalpha[s] + eps.JS.phi[s,t]
-    eps.JS.phi[s,t] ~ dnorm(0, tau.JS.phi[s])
+    logit(eta.OSalpha[s,t]) <- OSalpha[s] + eps.OS.phi[s,t]
+    eps.OS.phi[s,t] ~ dnorm(0, tau.OS.phi[s])
     
-    logit(eta.JBRalpha[s,t]) <- JBRalpha[s] + eps.JBR.psi[s,t]
-    eps.JBR.psi[s,t] ~ dnorm(0, tau.JBR.psi[s])
+    logit(eta.OBRalpha[s,t]) <- OBRalpha[s] + eps.OBR.psi[s,t]
+    eps.OBR.psi[s,t] ~ dnorm(0, tau.OBR.psi[s])
     } #t
     
     for (h in 1:2){
-    tau.FBR.psi[s,h] <- 1/(sigma.FBR.psi[s,h]*sigma.FBR.psi[s,h])
-    sigma.FBR.psi[s,h] ~ dunif(0,10)
-    FBRalpha[s,h] <- logit(FBRalpha1[s,h])
-    FBRalpha1[s,h] ~ dunif(0, 1)
+    tau.ABR.psi[s,h] <- 1/(sigma.ABR.psi[s,h]*sigma.ABR.psi[s,h])
+    sigma.ABR.psi[s,h] ~ dunif(0,10)
+    ABRalpha[s,h] <- logit(ABRalpha1[s,h])
+    ABRalpha1[s,h] ~ dunif(0, 1)
     
     for (t in 1:(n.yr-1)){
-    logit(eta.FBRalpha[s,h,t]) <- FBRalpha[s,h] + eps.FBR.psi[s,h,t]
-    eps.FBR.psi[s,h,t] ~ dnorm(0, tau.FBR.psi[s,h])
+    logit(eta.ABRalpha[s,h,t]) <- ABRalpha[s,h] + eps.ABR.psi[s,h,t]
+    eps.ABR.psi[s,h,t] ~ dnorm(0, tau.ABR.psi[s,h])
     } #t
     } } #h #s
     
     for (h in 1:2){
-    tau.pF[h] <- 1/(sigma.pF[h]*sigma.pF[h])
-    sigma.pF[h] ~ dunif(0,10)
+    tau.pA[h] <- 1/(sigma.pA[h]*sigma.pA[h])
+    sigma.pA[h] ~ dunif(0,10)
     for (k in 1:2){
-    mu.pF[k,h] <- logit(mu.pF1[k,h])
-    mu.pF1[k,h] ~ dunif(0,1)
+    mu.pA[k,h] <- logit(mu.pA1[k,h])
+    mu.pA1[k,h] ~ dunif(0,1)
 } # k
 
     for (t in 1:(n.yr-1)){
-    logit(eta.pF[h,t]) <- mu.pF[effort[t], h] + eps.pF[h,t]
-    eps.pF[h,t] ~ dnorm(0, tau.pF[h])
+    logit(eta.pA[h,t]) <- mu.pA[effort[t], h] + eps.pA[h,t]
+    eps.pA[h,t] ~ dnorm(0, tau.pA[h])
     }} #t #h
     
     #######################
@@ -191,33 +193,33 @@ for (t in 1:(n.yr-1)){
     ################################
     # Likelihood for counts
     ################################
-    # Number of wild born juvs
-    N[1,t+1] ~ dpois( (NJ[t]*eta.JSalpha[2,t]*eta.JBRalpha[2,t] + # juveniles to breeders
-                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
-                      NF[t]*eta.FSalpha[t]*eta.FBRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
-                      NB[t]*eta.BSalpha[t]*(1-eta.BFRalpha[t]) )* # breeders to breeders
+    # Number of wild born first-year
+    N[1,t+1] ~ dpois( (NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # First-year to breeders
+                      NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
+                      NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
+                      NB[t]*eta.BSalpha[t]*(1-eta.BARalpha[t]) )* # breeders to breeders
                       F[t+1]/2) 
-    # Juvs to nonbreeder adults
-    N[2,t+1] ~ dbin(eta.JSalpha[2,t]*(1-eta.JBRalpha[2,t]), NJ[t] )
-    # Juvs to breeders
-    N[3,t+1] ~ dbin(eta.JSalpha[2,t]*eta.JBRalpha[2,t], NJ[t] )
+    # First-year to nonbreeder adults
+    N[2,t+1] ~ dbin(eta.OSalpha[2,t]*(1-eta.OBRalpha[2,t]), NO[t] )
+    # First-year to breeders
+    N[3,t+1] ~ dbin(eta.OSalpha[2,t]*eta.OBRalpha[2,t], NO[t] )
     # Nonbreeder male wild adults to nonbreeder adults
-    N[4,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,1,t]), NF[t] )
+    N[4,t+1] ~ dbin(eta.ASalpha[t]*(1-eta.ABRalpha[2,1,t]), NA[t] )
     # Nonbreeder male wild adults to breeders
-    N[5,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,1,t], NF[t] )
+    N[5,t+1] ~ dbin(eta.ASalpha[t]*eta.ABRalpha[2,1,t], NA[t] )
     # Breeders to nonbreeder adults
-    N[6,t+1] ~ dbin(eta.BSalpha[t]*(eta.BFRalpha[t]), NB[t] )
+    N[6,t+1] ~ dbin(eta.BSalpha[t]*(eta.BARalpha[t]), NB[t] )
     # Breeders to breeders
-    N[7,t+1] ~ dbin(eta.BSalpha[t]*(1-eta.BFRalpha[t]), NB[t] )    
+    N[7,t+1] ~ dbin(eta.BSalpha[t]*(1-eta.BARalpha[t]), NB[t] )    
     # Nonbreeder hacked adults to nonbreeder adults
-    N[8,t+1] ~ dbin(eta.FSalpha[t]*(1-eta.FBRalpha[2,2,t]), NF[t] )
+    N[8,t+1] ~ dbin(eta.ASalpha[t]*(1-eta.ABRalpha[2,2,t]), NA[t] )
     # Nonbreeder hacked adults to breeders
-    N[9,t+1] ~ dbin(eta.FSalpha[t]*eta.FBRalpha[2,2,t], NF[t] )
+    N[9,t+1] ~ dbin(eta.ASalpha[t]*eta.ABRalpha[2,2,t], NA[t] )
 
     # Immigrants to breeders
     # N[10,t+1] ~ dpois(NB[t])*omegaB[t])
     # Immigrants to nonbreeders
-    # N[11,t+1] ~ dpois(NF[t])*omegaF[t])
+    # N[11,t+1] ~ dpois(NA[t])*omegaA[t])
     } # t
     
     for (t in 1:n.yr){
@@ -230,8 +232,8 @@ for (t in 1:(n.yr-1)){
 # Observation process    
     for (t in 2:n.yr){
     l.countBM[t] ~ dnorm(log(NB[t]), tau.BM) # breeding males
-    l.countFM[t] ~ dnorm(log(NF[t]), tau.FM) # nonbreeding adult males
-    l.countJM[t] ~ dnorm(log(NJ[t]), tau.JM) # juvenile males
+    l.countFM[t] ~ dnorm(log(NA[t]), tau.AM) # nonbreeding adult males
+    l.countJM[t] ~ dnorm(log(NO[t]), tau.OM) # First-year males
 } # t
     
     ################################
@@ -240,15 +242,15 @@ for (t in 1:(n.yr-1)){
     for (i in 1:nind){
     for (t in 1:(n.yr-1)){
     #Survival
-    phiJ[i,t] <- eta.JSalpha[sex[i],t] 
-    phiF[i,t] <- eta.FSalpha[t] 
+    phiO[i,t] <- eta.OSalpha[sex[i],t] 
+    phiA[i,t] <- eta.ASalpha[t] 
     phiB[i,t] <- eta.BSalpha[t]
     #Recruitment
-    psiJB[i,t] <- eta.JBRalpha[sex[i],t] 
-    psiFB[i,t] <- eta.FBRalpha[sex[i], hacked[i],t]
-    psiBF[i,t] <- eta.BFRalpha[t] 
+    psiOB[i,t] <- eta.OBRalpha[sex[i],t] 
+    psiAB[i,t] <- eta.ABRalpha[sex[i], hacked[i],t]
+    psiBA[i,t] <- eta.BARalpha[t] 
     #Re-encounter
-    pF[i,t] <- eta.pF[hacked[i],t] 
+    pA[i,t] <- eta.pA[hacked[i],t] 
     pB[i,t] <- eta.pB[t] 
     }#t
     }#i
@@ -258,18 +260,18 @@ for (t in 1:(n.yr-1)){
     # Define probabilities of state S(t+1) given S(t)
     for (t in first[i]:(n.yr-1)){
     ps[1,i,t,1] <- 0
-    ps[1,i,t,2] <- phiJ[i,t] * (1-psiJB[i,t])
-    ps[1,i,t,3] <- phiJ[i,t] * psiJB[i,t]
-    ps[1,i,t,4] <- 1-phiJ[i,t]
+    ps[1,i,t,2] <- phiO[i,t] * (1-psiOB[i,t])
+    ps[1,i,t,3] <- phiO[i,t] * psiOB[i,t]
+    ps[1,i,t,4] <- 1-phiO[i,t]
     
     ps[2,i,t,1] <- 0
-    ps[2,i,t,2] <- phiF[i,t] * (1-psiFB[i,t])
-    ps[2,i,t,3] <- phiF[i,t] * psiFB[i,t]
-    ps[2,i,t,4] <- 1-phiF[i,t]
+    ps[2,i,t,2] <- phiA[i,t] * (1-psiAB[i,t])
+    ps[2,i,t,3] <- phiA[i,t] * psiAB[i,t]
+    ps[2,i,t,4] <- 1-phiA[i,t]
     
     ps[3,i,t,1] <- 0
-    ps[3,i,t,2] <- phiB[i,t] * psiBF[i,t]
-    ps[3,i,t,3] <- phiB[i,t] * (1-psiBF[i,t])
+    ps[3,i,t,2] <- phiB[i,t] * psiBA[i,t]
+    ps[3,i,t,3] <- phiB[i,t] * (1-psiBA[i,t])
     ps[3,i,t,4] <- 1-phiB[i,t]
     
     ps[4,i,t,1] <- 0
@@ -284,9 +286,9 @@ for (t in 1:(n.yr-1)){
     po[1,i,t,4] <- 0
     
     po[2,i,t,1] <- 0
-    po[2,i,t,2] <- pF[i,t]
+    po[2,i,t,2] <- pA[i,t]
     po[2,i,t,3] <- 0
-    po[2,i,t,4] <- 1-pF[i,t]
+    po[2,i,t,4] <- 1-pA[i,t]
     
     po[3,i,t,1] <- 0
     po[3,i,t,2] <- 0
@@ -315,3 +317,39 @@ for (t in 1:(n.yr-1)){
     } #model
     ",fill = TRUE)
 sink()
+
+# data manip- assign dead recoveries as "not seen"
+datl$y[datl$y==5] <- 4
+datl$z[datl$z==4] <- NA
+datl$z[datl$z==5] <- NA
+
+# Initial values
+get.first <- function(x) min(which(x!=4))
+f <- apply(datl$y, 1, get.first)
+get.last <- function(x) max(which(x!=4))
+l <- apply(datl$y, 1, get.last)
+TFmat <- is.na(z.inits) & is.na(datl$z)
+for (i in 1:dim(TFmat)[1]){  TFmat[i,1:f[i]] <- FALSE }
+z.inits[TFmat] <- sample(size=length(z.inits[TFmat]),
+                         c(2,3), replace=T, prob=c(0.5, 0.5) ) 
+
+inits <- function(){list(z = z.inits)} 
+
+params <- c(
+  "N", "NB", "NA", "NO", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
+  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F",
+  #"omegaA", "omegaB", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
+  "OSalpha", "ASalpha", "BSalpha", "OBRalpha", "ABRalpha", "BARalpha",  "mu.pA", "mu.pB",
+  "OSalpha1", "ASalpha1", "BSalpha1","OBRalpha1", "ABRalpha1", "BARalpha1","mu.pA1", "mu.pB1",
+  "eps.OS.s", "eps.AS.s", "eps.BS.s", "eps.OBR.psi", "eps.ABR.psi", "eps.BAR.psi", "eps.pA", "eps.pB", 
+  "eta.OSalpha", "eta.ASalpha", "eta.BSalpha", "eta.OBRalpha", "eta.ABRalpha", "eta.BARalpha", "eta.pA",  "eta.pB", 
+  "sigma.OS.s", "sigma.AS.s", "sigma.BS.s", "sigma.OBR.psi", "sigma.ABR.psi", "sigma.BAR.psi", "sigma.pA", "sigma.pB"  
+)
+
+# MCMC settings
+# ni <- 200000; nt <- 100; nb <- 100000; nc <- 3; na <- 10000 # actual run # takes about 1 week on a high performance computer
+ni <- 10000; nt <- 1; nb <- 5000; nc <- 1; na <- 100 # time-saving run, but inadequate for convergence
+out <- jags(datl, inits, params, modfl,  
+            n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
+            parallel=T, module=c("glm", "bugs"))
+save(file=paste("./", m, ".Rdata", sep=""), list="out")

@@ -55,17 +55,17 @@ cat("
     # Priors and constraints
     ###################################################
     # Counts for first year are known with certainty
-    N[1,1] <- 0 # Wild born juvs
-    N[2,1] <- 0 # Juvs to nonbreeder
-    N[3,1] <- 0  # Juvs to breeders
+    N[1,1] <- 0 # Wild born first-year
+    N[2,1] <- 0 # First-year to nonbreeder
+    N[3,1] <- 0  # First-year to breeders
     N[4,1] <- 0  # Nonbreeder wild to nonbreeder
     N[5,1] <- 0  # Nonbreeder wild to breeders
     N[6,1] <- 0  # Breeders to nonbreeder
     N[7,1] <- 0  # Breeders to breeders
-    N[8,1] <- 0  # Wild juvs
+    N[8,1] <- 0  # Wild first-year
     N[9,1] <- 0  # Nonbreeder hacked to nonbreeder
     N[10,1] <- 0  # Nonbreeder hacked to breeder
-    F[1] <- 0 # No breeding first year, all hacked birds
+    F[1] <- 0 # No breeding during the first year, all hacked birds
 
     sigma.BM ~ dunif(0,10)
     sigma.AM ~ dunif(0,10) 
