@@ -31,6 +31,8 @@ knitr::read_chunk('01-run-survival-global-JAGS.R')
 
 Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
 
+Data and scripts used in analyses can be found at https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM
+
 # 1. Formulation of Multi-state Cormack-Jolly-Seber (CJS) Submodel with Emigration
 
 ## 1.1 Introduction

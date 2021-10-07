@@ -226,6 +226,7 @@ summary {
 }
 </style>
 <p>Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.</p>
+<p>Data and scripts used in analyses can be found at <a href="https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM" class="uri">https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM</a></p>
 <div id="formulation-of-multi-state-cormack-jolly-seber-cjs-submodel-with-emigration" class="section level1">
 <h1>1. Formulation of Multi-state Cormack-Jolly-Seber (CJS) Submodel with Emigration</h1>
 <div id="introduction" class="section level2">
@@ -2182,17 +2183,17 @@ library(tidybayes)</code></pre>
 <pre><code>## Warning: package 'tidybayes' was built under R version 4.0.5</code></pre>
 <pre class="r"><code>library (tidyr)
 # extract posteriors of IPMs-immigration 
-oji &lt;- as.data.frame(outi$sims.list$JSalpha1)
+oji &lt;- as.data.frame(outi$sims.list$JSalpha1) # first years, name slightly different due to older run, use OSalpha1
 ojil &lt;- oji %&gt;% pivot_longer(cols=c(1,2))
-ofi &lt;- as.data.frame(outi$sims.list$FSalpha1)
+ofi &lt;- as.data.frame(outi$sims.list$FSalpha1) # first years, name slightly different due to older run, use ASalpha1
 obi &lt;- as.data.frame(outi$sims.list$BSalpha1)
 
 # extract posteriors of IPMS-no immigration 
 # thin posteriors so they have equal lengths
 keep &lt;- seq(1, 27000, by=9)
-oj &lt;- as.data.frame(out$sims.list$JSalpha1[keep, ])
+oj &lt;- as.data.frame(out$sims.list$JSalpha1[keep, ]) # name difference see above
 ojl &lt;- oj %&gt;% pivot_longer(cols=c(1,2))
-of &lt;- as.data.frame(out$sims.list$FSalpha1[keep])
+of &lt;- as.data.frame(out$sims.list$FSalpha1[keep]) # name difference see above
 ob &lt;- as.data.frame(out$sims.list$BSalpha1[keep])
 
 ojil &lt;- oji %&gt;% pivot_longer(cols=c(1,2))
