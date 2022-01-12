@@ -1,7 +1,7 @@
 ## ---- global --------
 # JAGS must be installed on your computer
 library (jagsUI)
-load("./data/final-data.Rdata")
+load("./data/data-7states.Rdata")
 m<- c("surv7-jags-global")
 modfl <- paste("./", m, ".txt", sep="")
 
@@ -275,7 +275,7 @@ params <- c(
 
 # MCMC settings
 # ni <- 200000; nt <- 100; nb <- 100000; nc <- 3; na <- 10000 # actual run # takes about 1 week on a high performance computer
-ni <- 10000; nt <- 1; nb <- 5000; nc <- 1; na <- 100 # time-saving run, but inadequate for convergence
+ni <- 100; nt <- 1; nb <- 50; nc <- 1; na <- 100 # time-saving run, but inadequate for convergence
 out <- jags(datl, inits, params, modfl,  
             n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
             parallel=T, module=c("glm", "bugs"))

@@ -64,7 +64,8 @@ cat("
     N[7,1] <- 0  # Breeders to breeders
     N[8,1] <- 0  # Wild first-year
     N[9,1] <- 0  # Nonbreeder hacked to nonbreeder
-    N[10,1] <- 0  # Nonbreeder hacked to breeder
+    N[10,1] <- 0  # Immigrant to breeder
+    N[11,1] <- 0  # Immigrant to nonbreeder
     F[1] <- 0 # No breeding during the first year, all hacked birds
 
     sigma.BM ~ dunif(0,10)
@@ -73,13 +74,11 @@ cat("
     sigma.prod ~ dunif(0,10)
     sigma.omegaB ~ dunif(0,10)
     sigma.omegaA ~ dunif(0,10)
-    l.omegaB ~ dnorm(0, 0.01)I(-7 ,2.5) # upper limit of 20 imm per breeder to help run model
-    l.omegaA ~ dnorm(0, 0.01)I(-7 ,2.5) # upper limit of 20 imm per nonbreeder to help run model
+    omegaB1 ~ dunif(0,5) # upper limit 5 imm per breeder to help run model
+    omegaA1 ~ dunif(0,5) # upper limit 5 imm per nonbreeder to help run model
 
-  for (m in 1:2){
-    l.mu.F[m] ~ dnorm(0, 0.01)I(-7,2.5) # limits to help run model
-    sigma.F[m] ~ dunif(0,10)
-  } # m
+    for (m in 1:2){ mu.F[m] ~ dunif(0,5) } # m # limits to help run model
+    sigma.F ~ dunif(0,10)
     
     # Survival loops for demographic categories by sex, hacked, effort 
 
@@ -160,7 +159,7 @@ for (k in 1:2){
     #######################
     # Derived params
     #######################
-for (t in 2:(n.yr-1)){    
+for (t in 3:(n.yr-1)){    
     lambda[t] <-  Ntot[t+1]/(Ntot[t])
     loglambda[t] <- log(lambda[t])
 } #t
@@ -177,13 +176,13 @@ eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))
 } # j
 
 for (t in 1:(n.yr-1)){ 
-    log(F[t+1]) <- l.mu.F[manage[t+1]] + eps.F[t+1]
-    eps.F[t+1] ~ dnorm (0, 1/(sigma.F[manage[t+1]]*sigma.F[manage[t+1]]) )
+    log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
+    eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
     ################################
     # Likelihood for immigration
     ###############################
-    log(omegaB[t+1]) <-  l.omegaB + eps.omegaB[t+1] # breeder
-    log(omegaA[t+1]) <- l.omegaA + eps.omegaA[t+1] # nonbreeder
+    log(omegaB[t+1]) <-  log(omegaB1) + eps.omegaB[t+1] # breeder
+    log(omegaA[t+1]) <- log(omegaA1) + eps.omegaA[t+1] # nonbreeder
     eps.omegaB[t+1] ~ dnorm(0, 1/(sigma.omegaB*sigma.omegaB))
     eps.omegaA[t+1] ~ dnorm(0, 1/(sigma.omegaA*sigma.omegaA))
     ################################
@@ -222,6 +221,7 @@ for (t in 1:(n.yr-1)){
     NB[t] <-  sum(N[c(3,5,7,9,10),t]) # number of breeders
     NA[t] <-  sum(N[c(2,4,6,8,11),t]) # number of nonbreeders
     NO[t] <-  N[1,t] + aug[t] # number of first years
+    NI[t] <- sum(N[c(10,11),t]) # number of immigrants
     } # t
     
 # Observation process    
@@ -303,9 +303,9 @@ for (t in 1:(n.yr-1)){
     z[i,first[i]] <- y[i,first[i]]
     for (t in (first[i]+1):n.yr){
     # State process: draw S(t) given S(t-1)
-    z[i,t] ~ dcat(ps[z[i,t-1], i, t-1,1:4])
+    z[i,t] ~ dcat(ps[z[i,t-1], i, t-1, 1:4])
     # Observation process: draw O(t) given S(t)
-    y[i,t] ~ dcat(po[z[i,t], i, t-1,1:4])
+    y[i,t] ~ dcat(po[z[i,t], i, t-1, 1:4])
     } #t
     } #i
     
@@ -313,33 +313,48 @@ for (t in 1:(n.yr-1)){
     ",fill = TRUE)
 sink()
 
-# data manip- assign dead recoveries as "not seen"
 datl$y[datl$y==5] <- 4
-datl$z[datl$z==4] <- NA
-datl$z[datl$z==5] <- NA
 
-# Initial values
 get.first <- function(x) min(which(x!=4))
 f <- apply(datl$y, 1, get.first)
-get.last <- function(x) max(which(x!=4))
-l <- apply(datl$y, 1, get.last)
-TFmat <- is.na(z.inits) & is.na(datl$z)
-for (i in 1:dim(TFmat)[1]){  TFmat[i,1:f[i]] <- FALSE }
-z.inits[TFmat] <- sample(size=length(z.inits[TFmat]),
-                         c(2,3), replace=T, prob=c(0.5, 0.5) ) 
 
-inits <- function(){list(z = z.inits)} 
+
+# Function to create known latent states z
+known.state.ms <- function(ms, notseen){
+  # notseen: label for ?not seen?
+  state <- ms
+  state[state==notseen] <- NA
+  for (i in 1:dim(ms)[1]){
+    m <- min(which(!is.na(state[i,])))
+    state[i,m] <- NA
+  }
+  return(state)
+}
+
+ms.init.z <- function(ch, f){
+  for (i in 1:dim(ch)[1]){ch[i,1:f[i]] <- NA}
+  states <- max(ch, na.rm = TRUE)
+  known.states <- 2:(states-1)
+  v <- which(ch==states)
+  ch[-v] <- NA
+  ch[v] <- sample(known.states, length(v), replace = TRUE)
+  return(ch)
+}
+
+inits <- function(){list(z = ms.init.z(datl$y, f) )}
 
 params <- c(
-  "N", "NB", "NA", "NO", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
-  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F",
-  "omegaA", "omegaB", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
+  "N", "NB", "NA", "NO", "NI", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
+  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F", "mu.F",
+  "omegaA", "omegaB", "omegaA1", "omegaB1", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
   "OSalpha", "ASalpha", "BSalpha", "OBRalpha", "ABRalpha", "BARalpha",  "mu.pA", "mu.pB",
   "OSalpha1", "ASalpha1", "BSalpha1","OBRalpha1", "ABRalpha1", "BARalpha1","mu.pA1", "mu.pB1",
   "eps.OS.s", "eps.AS.s", "eps.BS.s", "eps.OBR.psi", "eps.ABR.psi", "eps.BAR.psi", "eps.pA", "eps.pB", 
   "eta.OSalpha", "eta.ASalpha", "eta.BSalpha", "eta.OBRalpha", "eta.ABRalpha", "eta.BARalpha", "eta.pA",  "eta.pB", 
   "sigma.OS.s", "sigma.AS.s", "sigma.BS.s", "sigma.OBR.psi", "sigma.ABR.psi", "sigma.BAR.psi", "sigma.pA", "sigma.pB"  
 )
+
+datl$z <- known.state.ms(datl$y, 4)
 
 # MCMC settings
 # ni <- 200000; nt <- 100; nb <- 100000; nc <- 3; na <- 10000 # actual run # takes about 1 week on a high performance computer

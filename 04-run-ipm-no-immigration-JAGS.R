@@ -57,14 +57,13 @@ cat("
     # Counts for first year are known with certainty
     N[1,1] <- 0 # First-year
     N[2,1] <- 0 # First-year to nonbreeder
-    N[3,1] <- 0  # First-year to breeders
-    N[4,1] <- 0  # Nonbreeder wild to nonbreeder
-    N[5,1] <- 0  # Nonbreeder wild to breeders
-    N[6,1] <- 0  # Breeders to nonbreeder
-    N[7,1] <- 0  # Breeders to breeders
-    N[8,1] <- 0  # Wild First-year
-    N[9,1] <- 0  # Nonbreeder hacked to nonbreeder
-    N[10,1] <- 0  # Nonbreeder hacked to breeder
+    N[3,1] <- 0 # First-year to breeders
+    N[4,1] <- 0 # Nonbreeder wild to nonbreeder
+    N[5,1] <- 0 # Nonbreeder wild to breeders
+    N[6,1] <- 0 # Breeders to nonbreeder
+    N[7,1] <- 0 # Breeders to breeders
+    N[8,1] <- 0 # Nonbreeder hacked adults to nonbreeder adults
+    N[9,1] <- 0 # Nonbreeder hacked to breeder
     F[1] <- 0 # No breeding during the first year, all hacked birds
 
     sigma.BM ~ dunif(0,10)
@@ -195,8 +194,8 @@ for (t in 1:(n.yr-1)){
     ################################
     # Number of wild born first-year
     N[1,t+1] ~ dpois( (NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # First-year to breeders
-                      NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
-                      NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
+                      NA[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
+                      NA[t]*eta.ASalpha[t]*eta.ABRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
                       NB[t]*eta.BSalpha[t]*(1-eta.BARalpha[t]) )* # breeders to breeders
                       F[t+1]/2) 
     # First-year to nonbreeder adults
@@ -225,8 +224,8 @@ for (t in 1:(n.yr-1)){
     for (t in 1:n.yr){
     Ntot[t] <- sum(N[c(1,2,3,4,5,6,7,8,9),t]) + aug[t]
     NB[t] <-  sum(N[c(3,5,7,9),t])
-    NF[t] <-  sum(N[c(2,4,6,8),t])
-    NJ[t] <-  N[1,t] + aug[t]
+    NA[t] <-  sum(N[c(2,4,6,8),t])
+    NO[t] <-  N[1,t] + aug[t]
     } # t
     
 # Observation process    

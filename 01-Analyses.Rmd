@@ -440,7 +440,11 @@ plt<- df %>%
   theme_classic() +
   ylab("Density") + xlab("Survival probability")
 plt
+
+# plot immigration and priors
+
 ```
+
 
 # 7. Literature cited  
 
