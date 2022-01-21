@@ -1,0 +1,366 @@
+
+    model{
+    ####################################################
+    ####################################################
+    # Mark-resight-recovery data
+    #   Observations (po) = y  
+    #     1 seen first year (age 0)
+    #     2 seen nonbreeder
+    #     3 seen breeder
+    #     4 recovered dead
+    #     5 not seen
+    #   States (ps)
+    #     1 alive first year
+    #     2 alive nonbreeder
+    #     3 alive breeder
+    #     4 dead
+    #     5 dead not recovered
+    #     6 emigrated alive
+    #     7 emigrated dead
+    #   Groups
+    #     1 wild born
+    #     2 hacked
+    #   Sex
+    #     1 female
+    #     2 male
+    #   Effort
+    #     1 low
+    #     2 high
+    ###################################################
+    # PARAMETERS
+    #   sO: survival probability first year 
+    #       (this is the letter 'O' rather than zero so jags can parse)
+    #   sA: survival probability nonbreeders
+    #   sB: survival probability breeders
+    #   psiOB: recruitment probability from first-year to breeder
+    #   psiAB: recruitment probability from nonbreeders to breeder
+    #   psiBA: recruitment probability from breeder to nonbreeders 
+    #   pO: resight probability first-year
+    #   pA: resight probability nonbreeders
+    #   pB: resight probability breeder
+    #   em: probability of emigration
+    #   r: probability of dead recovery
+    #   F: fecundity
+    #   omega: immigration
+    ###################################################
+    
+    ##############
+    # Priors and constraints
+    ##############
+    # Counts for first year are known with certainty
+    N[1,1] <- 0 # Wild born juvs
+    N[2,1] <- 0 # Juvs to nonbreeder
+    N[3,1] <- 0  # Juvs to breeders
+    N[4,1] <- 0  # Nonbreeder wild to nonbreeder
+    N[5,1] <- 0  # Nonbreeder wild to breeders
+    N[6,1] <- 0  # Breeders to nonbreeder
+    N[7,1] <- 0  # Breeders to breeders
+    N[8,1] <- 0 # Nonbreeder hacked adults to nonbreeder adults
+    N[9,1] <- 0  # Nonbreeder hacked to breeder
+    N[10,1] <- 0  # Immigrants to breeder
+    N[11,1] <- 0  # Immigrants to nonbreeder
+    N[12,1] <- 0  # Breeder to emigrant
+    N[13,1] <- 0  # Nonbreeder to emigrant
+    N[14,1] <- 0  # Juvs to emigrant
+    F[1] <- 0 # No breeding during the first year, all hacked birds
+
+    sigma.BM ~ dunif(0,10)
+    sigma.AM ~ dunif(0,10)
+    sigma.OM ~ dunif(0,10)
+    sigma.prod ~ dunif(0,10)
+    # sigma.omegaB ~ dunif(0,10)
+    # sigma.omegaA ~ dunif(0,10)
+    # sigma.em ~ dunif(0,10)
+    for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  } #j
+    
+    omegaB1 ~ dunif(0, 3) # upper limit of 10 imm per breeder to help run model
+    omegaA1 ~ dunif(0, 3) # upper limit of 10 imm per nonbreeder to help run model
+    l.mu.em <- logit(mu.em)
+    mu.em ~ dunif(0,1)
+    for (m in 1:2){
+      mu.F[m] ~ dunif(0,10) # limits to help run model
+    } # m
+    sigma.F ~ dunif(0,10)
+
+    # Survival loops for demographic categories by sex, hacked, effort 
+    sigma.AS.s ~ dunif(0,10)
+    ASalpha <- logit(ASalpha1)
+    ASalpha1 ~ dunif(0, 1)
+    
+    sigma.BS.s ~ dunif(0,10)
+    BSalpha <- logit(BSalpha1) 
+    BSalpha1 ~ dunif(0, 1)
+    
+    sigma.BAR.psi ~ dunif(0,10)
+    BARalpha <- logit(BARalpha1)
+    BARalpha1 ~ dunif(0, 1)
+    r ~ dunif(0, 1)
+    sigma.pB ~ dunif(0,10)
+    sigma.pA ~ dunif(0,10)
+    
+    for (k in 1:2){
+      mu.pB[k]<- logit(mu.pB1[k])
+      mu.pB1[k] ~ dunif(0, 1)
+      mu.pA[k] <- logit(mu.pA1[k])
+      mu.pA1[k] ~ dunif(0, 1)
+    } # k
+    
+    for (t in 1:(n.yr-1)){
+      logit(eta.ASalpha[t]) <- ASalpha + eps.AS.s[t]
+      eps.AS.s[t] ~ dnorm(0, 1/(sigma.AS.s*sigma.AS.s))
+      logit(eta.BSalpha[t]) <- BSalpha + eps.BS.s[t]
+      eps.BS.s[t] ~ dnorm(0, 1/(sigma.BS.s*sigma.BS.s))    
+      logit(eta.BARalpha[t]) <- BARalpha + eps.BAR.psi[t]
+      eps.BAR.psi[t] ~ dnorm(0, 1/(sigma.BAR.psi*sigma.BAR.psi))
+      logit(eta.pB[t]) <- mu.pB[effort[t]] + eps.pB[t]
+      eps.pB[t] ~ dnorm(0, 1/(sigma.pB*sigma.pB))
+    } #t
+    
+    for(s in 1:2){
+      sigma.OS.s[s] ~ dunif(0, 10)
+      OSalpha[s] <- logit(OSalpha1[s]) 
+      OSalpha1[s] ~ dunif(0, 1)
+      sigma.OBR.psi[s] ~ dunif(0, 10)
+      OBRalpha[s] <- logit(OBRalpha1[s]) 
+      OBRalpha1[s] ~ dunif(0, 1)
+      
+      for (t in 1:(n.yr-1)){
+        logit(eta.OSalpha[s,t]) <- OSalpha[s] + eps.OS.s[s,t]
+        eps.OS.s[s,t] ~ dnorm(0, 1/(sigma.OS.s[s]*sigma.OS.s[s]))
+        logit(eta.OBRalpha[s,t]) <- OBRalpha[s] + eps.OBR.psi[s,t]
+        eps.OBR.psi[s,t] ~ dnorm(0, 1/(sigma.OBR.psi[s]*sigma.OBR.psi[s]))
+      } #t
+      
+      for (h in 1:2){
+        sigma.ABR.psi[s,h] ~ dunif(0, 10)
+        ABRalpha[s,h] <- logit(ABRalpha1[s,h])
+        ABRalpha1[s,h] ~ dunif(0, 1)
+        
+        for (t in 1:(n.yr-1)){
+          logit(eta.ABRalpha[s,h,t]) <- ABRalpha[s,h] + eps.ABR.psi[s,h,t]
+          eps.ABR.psi[s,h,t] ~ dnorm(0, 1/(sigma.ABR.psi[s,h]*sigma.ABR.psi[s,h]))
+        } } }   #t #h #s
+    
+    for (t in 1:(n.yr-1)){
+      logit(eta.pA[t]) <- mu.pA[effort[t]] + eps.pA[t]
+      eps.pA[t] ~ dnorm(0, 1/(sigma.pA*sigma.pA)) 
+    } #t 
+    
+    #######################
+    # Derived params
+    #######################
+    for (t in 1:(n.yr-1)){ 
+        lambda[t] <- Ntot[t+1]/(Ntot[t]) }
+    
+    ###############################
+    # Likelihood for productivity
+    ###############################
+for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
+for (t in 3:(n.yr-1)){ 
+    for (j in 1:n.ter){
+    log(prod.mu[t,j]) <- log(F[t]) + eps.prod[j] # link productivity to fecundity
+    } # j
+    } # n.yr
+    for (t in 1:(n.yr-1)){ 
+    log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
+    eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F))
+    ################################
+    # Likelihood for immigration and emigration
+    ###############################
+      log(omegaB[t]) <- log(omegaB1) #+ eps.omegaB[t] # breeder
+      log(omegaA[t]) <- log(omegaA1) #+ eps.omegaA[t] # nonbreeder
+      logit(em[t]) <-  l.mu.em #+ eps.em[t]
+      #eps.omegaB[t] ~ dnorm(0, 1/(sigma.omegaB*sigma.omegaB))
+      #eps.omegaA[t] ~ dnorm(0, 1/(sigma.omegaA*sigma.omegaA))
+      #eps.em[t] ~ dnorm(0, 1/(sigma.em*sigma.em))
+
+      # ################################
+      # # Likelihood for counts
+      # ################################
+
+      # # Number of wild born juvs
+      N[1,t+1] ~ dpois( (NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # first year males to breeders
+                           NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
+                           NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
+                           NB[t]*eta.BSalpha[t]*(1-eta.BARalpha[t])  ) * F[t]/2) # breeders to breeders
+      # first year to nonbreeder adults
+      N[2,t+1] ~ dbin( eta.OSalpha[2,t]*(1-eta.OBRalpha[2,t]), NO[t] )
+      # first year to breeders
+      N[3,t+1] ~ dbin( eta.OSalpha[2,t]*eta.OBRalpha[2,t], NO[t] )
+      # Nonbreeder male adults to nonbreeder adults
+      N[4,t+1] ~ dbin( eta.ASalpha[t]*(1-eta.ABRalpha[2,1,t]), NF[t] )
+      # Nonbreeder male adults to breeders
+      N[5,t+1] ~ dbin( eta.ASalpha[t]*eta.ABRalpha[2,1,t], NF[t] )
+      # Breeders to nonbreeder adults
+      N[6,t+1] ~ dbin( eta.BSalpha[t]*(eta.BARalpha[t]), NB[t] )
+      # Breeders to breeders
+      N[7,t+1] ~ dbin( eta.BSalpha[t]*(1-eta.BARalpha[t]), NB[t] )
+      # Nonbreeder hacked adults to nonbreeder adults
+      N[8,t+1] ~ dbin( eta.ASalpha[t]*(1-eta.ABRalpha[2,2,t]), NF[t] )
+      # Nonbreeder hacked adults to breeders
+      N[9,t+1] ~ dbin( eta.ASalpha[t]*eta.ABRalpha[2,2,t], NF[t] )
+      # Immigrants to breeders
+      N[10,t+1] ~ dpois( NB[t]*omegaB[t] )
+      # Immigrants to nonbreeders
+      N[11,t+1] ~ dpois( NF[t]*omegaA[t] )
+      # Breeders to emigrants
+      N[12,t+1] ~ dbin( em[t], NB[t] )
+      # NonBreeders to emigrants
+      N[13,t+1] ~ dbin( em[t], NF[t] )
+      # Juveniles to emigrants
+      N[14,t+1] ~ dbin( em[t], NO[t] )
+    } # t
+    
+    for (t in 1:n.yr){
+      Ntot[t] <-  sum(N[1:11,t]) + aug[t] - N[12,t] - N[13,t] - N[14,t] # total number
+      NB[t] <- N[3,t] + N[5,t] + N[7,t] + N[9,t] + N[10,t] - N[12,t] # number of breeders
+      NF[t] <- N[2,t] + N[4,t] + N[6,t] + N[8,t] + N[11,t] - N[13,t] # number of nonbreeders
+      NO[t] <- N[1,t] + aug[t] - N[14,t] # number of first years
+      NE[t] <- N[12,t] + N[13,t] + N[14,t] # number of emigrants
+      NI[t] <- N[10,t] + N[11,t] # number of immigrants
+    } # t
+    
+    # Observation process
+    for (t in 2:n.yr){
+      l.countBM[t] ~ dnorm(log(NB[t]), 1/(sigma.BM*sigma.BM)) # breeding males
+      l.countFM[t] ~ dnorm(log(NF[t]), 1/(sigma.AM*sigma.AM)) # nonbreeding adult males
+      l.countJM[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM)) # first year males
+    } # t
+    
+    ################################
+    # Likelihood for survival
+    ################################
+    for (i in 1:nind){
+      for (t in 1:(n.yr-1)){
+        #Survival
+        sO[i,t] <- eta.OSalpha[sex[i],t] # first year
+        sA[i,t] <- eta.ASalpha[t] # nonbreeder
+        sB[i,t] <- eta.BSalpha[t] # breeder
+        #Recruitment
+        psiOB[i,t] <- eta.OBRalpha[sex[i],t] # first year to breeder
+        psiAB[i,t] <- eta.ABRalpha[sex[i], hacked[i],t] # nonbreederto breeder
+        psiBA[i,t] <- eta.BARalpha[t] # breeder to nonbreeder
+        #Re-encounter
+        pA[i,t] <- eta.pA[t] # resight of nonbreeders
+        pB[i,t] <- eta.pB[t]  # resight of breeders
+      }#t
+    }#i
+    
+    # Define state-transition and observation matrices
+    for (i in 1:nind){  
+      # Define probabilities of state S(t+1) given S(t)
+      for (t in first[i]:(n.yr-1)){
+        ps[1,i,t,1] <- 0
+        ps[1,i,t,2] <- sO[i,t] * (1-psiOB[i,t]) * (1-em[t])
+        ps[1,i,t,3] <- sO[i,t] * psiOB[i,t] * (1-em[t])
+        ps[1,i,t,4] <- (1-sO[i,t]) * r * (1-em[t])
+        ps[1,i,t,5] <- (1-sO[i,t]) * (1-r) * (1-em[t])
+        ps[1,i,t,6] <- sO[i,t] * em[t]
+        ps[1,i,t,7] <- (1-sO[i,t]) * (1-r) * em[t]
+        
+        ps[2,i,t,1] <- 0
+        ps[2,i,t,2] <- sA[i,t] * (1-psiAB[i,t]) * (1-em[t])
+        ps[2,i,t,3] <- sA[i,t] * psiAB[i,t] * (1-em[t])
+        ps[2,i,t,4] <- (1-sA[i,t]) * r * (1-em[t])
+        ps[2,i,t,5] <- (1-sA[i,t]) * (1-r) * (1-em[t])
+        ps[2,i,t,6] <- sA[i,t] * em[t]
+        ps[2,i,t,7] <- (1-sA[i,t]) * (1-r) * em[t]
+        
+        ps[3,i,t,1] <- 0
+        ps[3,i,t,2] <- sB[i,t] * psiBA[i,t] * (1-em[t])
+        ps[3,i,t,3] <- sB[i,t] * (1-psiBA[i,t]) * (1-em[t])
+        ps[3,i,t,4] <- (1-sB[i,t]) * r * (1-em[t])
+        ps[3,i,t,5] <- (1-sB[i,t]) * (1-r) * (1-em[t])
+        ps[3,i,t,6] <- sB[i,t] * em[t]
+        ps[3,i,t,7] <- (1-sB[i,t]) * (1-r) * em[t]
+        
+        ps[4,i,t,1] <- 0
+        ps[4,i,t,2] <- 0
+        ps[4,i,t,3] <- 0
+        ps[4,i,t,4] <- 0
+        ps[4,i,t,5] <- 1
+        ps[4,i,t,6] <- 0
+        ps[4,i,t,7] <- 0
+        
+        ps[5,i,t,1] <- 0
+        ps[5,i,t,2] <- 0
+        ps[5,i,t,3] <- 0
+        ps[5,i,t,4] <- 0
+        ps[5,i,t,5] <- 1
+        ps[5,i,t,6] <- 0
+        ps[5,i,t,7] <- 0
+        
+        ps[6,i,t,1] <- 0
+        ps[6,i,t,2] <- 0
+        ps[6,i,t,3] <- 0
+        ps[6,i,t,4] <- 0
+        ps[6,i,t,5] <- 0
+        ps[6,i,t,6] <- 1
+        ps[6,i,t,7] <- 0
+        
+        ps[7,i,t,1] <- 0
+        ps[7,i,t,2] <- 0
+        ps[7,i,t,3] <- 0
+        ps[7,i,t,4] <- 0
+        ps[7,i,t,5] <- 0
+        ps[7,i,t,6] <- 0
+        ps[7,i,t,7] <- 1
+        
+        # Define probabilities of O(t) given S(t)
+        po[1,i,t,1] <- 1 
+        po[1,i,t,2] <- 0
+        po[1,i,t,3] <- 0
+        po[1,i,t,4] <- 0
+        po[1,i,t,5] <- 0
+        
+        po[2,i,t,1] <- 0
+        po[2,i,t,2] <- pA[i,t]
+        po[2,i,t,3] <- 0
+        po[2,i,t,4] <- 0
+        po[2,i,t,5] <- 1-pA[i,t]
+        
+        po[3,i,t,1] <- 0
+        po[3,i,t,2] <- 0
+        po[3,i,t,3] <- pB[i,t]
+        po[3,i,t,4] <- 0
+        po[3,i,t,5] <- 1-pB[i,t]
+        
+        po[4,i,t,1] <- 0
+        po[4,i,t,2] <- 0
+        po[4,i,t,3] <- 0
+        po[4,i,t,4] <- 1
+        po[4,i,t,5] <- 0
+        
+        po[5,i,t,1] <- 0
+        po[5,i,t,2] <- 0
+        po[5,i,t,3] <- 0
+        po[5,i,t,4] <- 0
+        po[5,i,t,5] <- 1
+        
+        po[6,i,t,1] <- 0
+        po[6,i,t,2] <- 0
+        po[6,i,t,3] <- 0
+        po[6,i,t,4] <- 0
+        po[6,i,t,5] <- 1
+        
+        po[7,i,t,1] <- 0
+        po[7,i,t,2] <- 0
+        po[7,i,t,3] <- 0
+        po[7,i,t,4] <- 0
+        po[7,i,t,5] <- 1
+      } #t
+    } #i
+    
+    # Likelihood 
+    for (i in 1:nind){
+      # Define latent state at first capture
+      z[i,first[i]] <- y[i,first[i]]
+      for (t in (first[i]+1):n.yr){
+        # State process: draw S(t) given S(t-1)
+        z[i,t] ~ dcat(ps[z[i,t-1], i, t-1, 1:7])
+        # Observation process: draw O(t) given S(t)
+        y[i,t] ~ dcat(po[z[i,t], i, t-1, 1:5])
+      } #t
+    } #i
+    } #model
+    
