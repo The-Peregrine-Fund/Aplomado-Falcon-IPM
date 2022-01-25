@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Brian W. Rolek"
-date: "01 October 2021"
+date: "25 January 2022"
 output:
   html_document:
     df_print: paged
@@ -26,10 +26,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('01-run-survival-global-JAGS.R')
+knitr::read_chunk('R/01-run-survival-global-JAGS.R')
 ```
 
-Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Ecological Applications.
+Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Biological Conservation.
 
 Data and scripts used in analyses can be found at https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM
 
@@ -71,7 +71,8 @@ $$
 We could not estimate resight probabilities of first-year birds because they can only be observed once and cannot be resighted. Therefore, we assume perfect resight probability (1.0 at row 1 and column 1) because most of these were released captive bred birds or were birds observed during productivity surveys. 
 
 ## 1.3 State Transition Matrix  
-Next, we specified the state transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-year at time t and column 1 corresponds with first-year at time t+1.
+Next, we specified the state transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-years at time t and column 1 corresponds with first-years at time t+1. Here, $r$ is the recapture probability of a recently dead bird and $\delta$ is the probability of emigration. 
+
 $$ \Omega=
 \begin{bmatrix} 
 0 & \phi^0(1-\psi^{0B})(1-\delta)  & \phi^0\psi^{0B}(1-\delta) & (1-\phi^0)r(1-\delta) & (1-\phi^0)(1-r)(1-\delta) & \phi^0\delta & (1-\phi^0)(1-r)\delta\\ 
@@ -344,7 +345,7 @@ HDIofMCMC(out$sims.list$em, cred=0.95)
 ## 3.1 JAGS and R Code for the CJS Submodel with Reduced Covariates
 We reduced the number of covariates using probability of direction calculations from the global model by eliminating covariates and parameters that were not important (e.g., emigration). 
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('02-run-survival-reduced-JAGS.R')
+knitr::read_chunk('R/02-run-survival-reduced-JAGS.R')
 ```
 ```{r, reduced, eval=FALSE}
 ```
@@ -353,44 +354,53 @@ knitr::read_chunk('02-run-survival-reduced-JAGS.R')
 We specify the IPM including observation and state trasition matices for the survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
 
 ## 4.1 Formulation of the IPM with Immigration
-This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders separately. The number of immigrants ($N_{t+1}^{I}$) was specified as  
+This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders combined. The number of immigrants ($N_{t+1}^{I}$) was specified as  
 
-$$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega_{t})$$
-$$log(\omega_{t})=\mu^{\omega}+\epsilon_{t}^{\omega}$$
-$$\epsilon_{t}^{\omega} \sim {\sf normal} (0,\sigma^{\omega})$$
+$$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega)$$
+And we assigned the following prior:
+$$ \omega \sim {\sf half normal}(mean=0,sd=1)$$
 We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey. 
 
 ## 4.2 JAGS and R Code for the IPM with Immigration  
 
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('03-run-ipm-immigration-JAGS.R')
+knitr::read_chunk('R/03-run-ipm-immigration-JAGS.R')
 ```
 ```{r,ipm1, eval=FALSE}
 ```
 
+## 4.3 The Importance of Immigration
+
+
+![Fig. S3. A comparison of prior and posterior densities of immigration rate.](figs/Immigration_post_prior.png)
+
+
+![Fig. S4. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).](figs/Immigration hist.png)
+
 # 5. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates
 ## 5.1 JAGS and R Code for the IPM without Immigration 
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('04-run-ipm-no-immigration-JAGS.R')
+knitr::read_chunk('R/04-run-ipm-no-immigration-JAGS.R')
 ```
 ```{r,ipm2, eval=FALSE}
 ```
 ## 5.2 Postprocess Model Output  
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('05-Postprocessing.R')
+knitr::read_chunk('R/05-Postprocessing.R')
 ```
 ```{r,ipm postprocess 1, eval=FALSE}
 ```
 ## 5.3 Plot Differences  
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('05-Postprocessing.R')
+knitr::read_chunk('R/05-Postprocessing.R')
 ```
 ```{r,ipm postprocess 2, eval=FALSE}
 ```
+![Fig. S5. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis.](figs/SurvivalDiffs_IPM_Reduced.png)
 
 # 6. Compare survival estimates from IPMs
 
-```{r comp surv IPMs, fig.width=6, fig.height=4, fig.cap= "Fig. S3. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration."}
+```{r comp surv IPMs, fig.width=6, fig.height=4, fig.cap= "Fig. S6. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration."}
 ## ---- comp surv --------
 load(".\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata")
 outi <- out
