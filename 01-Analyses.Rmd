@@ -36,7 +36,7 @@ Data and scripts used in analyses can be found at https://github.com/The-Peregri
 # 1. Formulation of Multi-state Cormack-Jolly-Seber (CJS) Submodel with Emigration
 
 ## 1.1 Introduction
-This document describes analyses using a CJS submodel with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008) and integrated population models (IPMs). First, we describe preliminary analyses that assessed the importance of group covariates (sex, hacked, effort) for inclusion in the final IPM, and assess the importance of emigration for inclusion in the IPM (Sections 1,2, and 3). Next, we use an IPM to evaluate the importance of including immigration (Section 4). Lastly, we implement analyses of the IPM to gain inference about vital rates of Aplomado Falcon (Section 5). 
+This document describes analyses using a CJS submodel with a state-space formulation (Gimenez et al. 2007, Royle et al. 2008) and integrated population models (IPMs). First, we describe preliminary analyses that assessed the importance of group covariates (sex, hacked, effort) for inclusion in the final IPM, and assess the importance of emigration for inclusion in the IPM (Sections 1, 2, and 3). Next, we use an IPM to evaluate the importance of including immigration (Section 4). Then we implement analyses of the IPM to gain inference about vital rates of Aplomado Falcon (Section 5) and compare survival rates of IPMs that included immigration with those that exclude immigration (Section 6).  
 
 ## 1.2 Observation Matrix  
 We specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
@@ -107,7 +107,7 @@ Including emigration within this model allowed us to estimate _true_ survival ra
 ```
 
 ## 2.2 Postprocess Global Model
-We postprocess the output from JAGS toexamine differences between sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.  
+We postprocess the output from JAGS to examine differences between sex, hacked, and effort estimates for probabilities of survival, recruitment, resight, and estimate emigration.  
 
 ### 2.2.1 Functions to Summarize Posterior Distritbutions
 ```{r funcs, message=FALSE}
@@ -351,13 +351,13 @@ knitr::read_chunk('R/02-run-survival-reduced-JAGS.R')
 ```
 
 # 4. Implementation of the Integrated Population Model with Immigration  
-We specify the IPM including observation and state trasition matices for the survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
+We specify the IPM including observation and state transition matices for the survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
 
 ## 4.1 Formulation of the IPM with Immigration
 This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders combined. The number of immigrants ($N_{t+1}^{I}$) was specified as  
 
 $$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega)$$
-And we assigned the following prior:
+We assigned the following prior to immigration rate:
 $$ \omega \sim {\sf half normal}(mean=0,sd=1)$$
 We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey. 
 
@@ -375,6 +375,8 @@ knitr::read_chunk('R/03-run-ipm-immigration-JAGS.R')
 ![Fig. S3. A comparison of prior and posterior densities of immigration rate.](figs/Immigration_post_prior.png)
 
 
+
+
 ![Fig. S4. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).](figs/Immigration hist.png)
 
 # 5. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates
@@ -388,9 +390,9 @@ knitr::read_chunk('R/04-run-ipm-no-immigration-JAGS.R')
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('R/05-Postprocessing.R')
 ```
-```{r,ipm postprocess 1, eval=FALSE}
+```{r,ipm postprocess 1, eval=FALSE, echo=-1}
 ```
-## 5.3 Plot Differences  
+## 5.2 Plot Differences  
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('R/05-Postprocessing.R')
 ```
@@ -402,8 +404,10 @@ knitr::read_chunk('R/05-Postprocessing.R')
 
 ```{r comp surv IPMs, fig.width=6, fig.height=4, fig.cap= "Fig. S6. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration."}
 ## ---- comp surv --------
-load(".\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata")
+# load IPM results with immigration
+load(".\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata") 
 outi <- out
+# load IPM results without immigration
 load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
 library (MCMCvis)
 library (ggplot2)

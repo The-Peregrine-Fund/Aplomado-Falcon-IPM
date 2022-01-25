@@ -274,9 +274,8 @@ params <- c(
 )
 
 # MCMC settings
-# ni <- 200000; nt <- 100; nb <- 100000; nc <- 3; na <- 10000 # actual run # takes about 1 week on a high performance computer
-ni <- 100; nt <- 1; nb <- 50; nc <- 1; na <- 100 # time-saving run, but inadequate for convergence
+ni <- 200000; nt <- 100; nb <- 100000; nc <- 3; na <- 10000 # actual run # takes about 1 week on a high performance computer
 out <- jags(datl, inits, params, modfl,  
             n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
             parallel=T, module=c("glm", "bugs"))
-save(file=paste("./", m, ".Rdata", sep=""), list="out")
+# save(file=paste("./", m, ".Rdata", sep=""), list="out")

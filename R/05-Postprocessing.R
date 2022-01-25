@@ -1,5 +1,6 @@
 ## ---- ipm postprocess 1 --------
 load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
+# load(".\\ipm-jags-no-imm.Rdata")
 library (jagsUI)
 # plots
 library (ggplot2)

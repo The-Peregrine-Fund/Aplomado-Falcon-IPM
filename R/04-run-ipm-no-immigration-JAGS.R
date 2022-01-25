@@ -299,7 +299,6 @@ f <- apply(datl$y, 1, get.first)
 
 # Function to create known latent states z
 known.state.ms <- function(ms, notseen){
-  # notseen: label for ?not seen?
   state <- ms
   state[state==notseen] <- NA
   for (i in 1:dim(ms)[1]){
@@ -335,8 +334,7 @@ params <- c(
 datl$z <- known.state.ms(datl$y, 4)
 
 # MCMC settings
-ni <- 200000; nt <- 50; nb <- 150000; nc <- 3; na <- 1000 # actual run # takes about 1 week on a high performance computer
-
+ni <- 200000; nt <- 50; nb <- 150000; nc <- 3; na <- 1000 
 out <- jags(datl, inits, params, modfl,  
             n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
             parallel=T, module=c("glm", "bugs"))
