@@ -214,7 +214,6 @@ summary {
 <li><a href="#implementation-of-the-integrated-population-model-without-immigration-for-evaluation-of-vital-rates">5. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates</a><ul>
 <li><a href="#jags-and-r-code-for-the-ipm-without-immigration">5.1 JAGS and R Code for the IPM without Immigration</a></li>
 <li><a href="#postprocess-model-output">5.2 Postprocess Model Output</a></li>
-<li><a href="#plot-differences">5.2 Plot Differences</a></li>
 </ul></li>
 <li><a href="#compare-survival-estimates-from-ipms">6. Compare survival estimates from IPMs</a></li>
 <li><a href="#literature-cited">7. Literature cited</a></li>
@@ -1980,92 +1979,73 @@ out &lt;- jags(datl, inits, params, modfl,
 </div>
 <div id="postprocess-model-output" class="section level2">
 <h2>5.2 Postprocess Model Output</h2>
-<pre class="r"><code># load(&quot;.\\ipm-jags-no-imm.Rdata&quot;)
+<pre class="r"><code>load(&quot;.\\outputs\\ipm-jags-no-imm.Rdata&quot;) # load model output
 library (jagsUI)
-# plots
 library (ggplot2)
 library (gridExtra)
-# Function to compute highest density interval. From Kruschke 2011.
-source(&quot;HDIofMCMC.R&quot;)
-
-data_summary &lt;- function(x) {
+source(&quot;HDIofMCMC.R&quot;) # Function to compute highest density interval. From Kruschke 2011.
+data_summary85 &lt;- function(x) {
   m &lt;- median(x)
   ymin &lt;- HDIofMCMC(x, credMass=0.85)[[1]]
   ymax &lt;- HDIofMCMC(x, credMass=0.85)[[2]]
   return(c(y=m,ymin=ymin,ymax=ymax))
 }
 
-data_summary2 &lt;- function(x) {
+data_summary95 &lt;- function(x) {
   m &lt;- median(x)
   ymin &lt;- HDIofMCMC(x, credMass=0.95)[[1]]
   ymax &lt;- HDIofMCMC(x, credMass=0.95)[[2]]
   return(c(y=m,ymin=ymin,ymax=ymax))
 }
 
-J.surv &lt;- J.trans &lt;- F.surv &lt;- F.trans &lt;- B.surv &lt;- B.trans &lt;- array(NA, dim=c(dim(out$sims.list$JSalpha1)[1],3))
-B.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
-F.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
-##########################
-# Juveniles
-#########################
-# Survival
-# female - male
-J.surv[,2]&lt;- out$sims.list$JSalpha1[,1] - out$sims.list$JSalpha1[,2] 
-# Recruitment
-# female - male
-J.trans[,2]&lt;- out$sims.list$JBRalpha1[,1] - out$sims.list$JBRalpha1[,2]
+O.surv &lt;- O.trans &lt;- A.surv &lt;- A.trans &lt;- B.surv &lt;- B.trans &lt;- 
+  array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
+B.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pB1)[1],2))
+A.recap &lt;-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],2))
 
-##########################
-# Floaters
-#########################
-# Recruitment
-# wild - hacked
-F.trans[,1]&lt;- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,2,1])/2 -
-  (out$sims.list$FBRalpha1[,1,2] + out$sims.list$FBRalpha1[,2,2])/2
-# female - male
-F.trans[,2]&lt;- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,1,2])/2 -
-  (out$sims.list$FBRalpha1[,2,1] + out$sims.list$FBRalpha1[,2,2])/2
-# Recapture prob  
-# wild - hacked
-# mu.pF1 [effort, h]
-F.recap[,1] &lt;- (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,2,1])/2 - 
-              (out$sims.list$mu.pF1[,1,2] + out$sims.list$mu.pF1[,2,2])/2
-# high effort - low effort
-F.recap[,2] &lt;- (out$sims.list$mu.pF1[,2,1] + out$sims.list$mu.pF1[,2,2])/2 - 
-            (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,1,2])/2
-# mu.pB[effort[t]]
-# high effort - low effort
-B.recap[,1] &lt;- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] 
+# First-years (O the letter)
+O.surv[,2]&lt;- out$sims.list$OSalpha1[,1] - out$sims.list$OSalpha1[,2] # Survival female - male
+O.trans[,2]&lt;- out$sims.list$OBRalpha1[,1] - out$sims.list$OBRalpha1[,2]# Recruitment female - male
+# Nonbreeder (A) Recruitment
+A.trans[,1]&lt;- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,2,1])/2 -
+  (out$sims.list$ABRalpha1[,1,2] + out$sims.list$ABRalpha1[,2,2])/2 # wild - hacked
+A.trans[,2]&lt;- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,1,2])/2 -
+  (out$sims.list$ABRalpha1[,2,1] + out$sims.list$ABRalpha1[,2,2])/2 # female - male
+# Resight probabilities of nonbreeders indexed as mu.pA1 [effort, h]
+A.recap[,1] &lt;- (out$sims.list$mu.pA1[,1,1] + out$sims.list$mu.pA1[,2,1])/2 - 
+              (out$sims.list$mu.pA1[,1,2] + out$sims.list$mu.pA1[,2,2])/2 # wild - hacked
+A.recap[,2] &lt;- (out$sims.list$mu.pA1[,2,1] + out$sims.list$mu.pA1[,2,2])/2 - 
+            (out$sims.list$mu.pA1[,1,1] + out$sims.list$mu.pA1[,1,2])/2 # high effort - low # Resight probabilities of nonbreeders indexed as mu.pB1 [effort]
+B.recap[,1] &lt;- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] # high effort - low effort
 
 tab &lt;- data.frame(stage= c(&quot;First-year&quot;, &quot;First-year&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Nonbreeder&quot;, &quot;Breeder&quot;),
                   param= c(&quot;Survival&quot;, &quot;Transition&quot;, &quot;Transition&quot;, &quot;Transition&quot;, &quot;Resight&quot;, &quot;Resight&quot;, &quot;Resight&quot;),
                   comp= c(&quot;Sex&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Effort&quot;, &quot;Effort&quot; ),
                   median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
-tab[1, 4:6]&lt;- round(data_summary2(J.surv[,2]),3)
-tab[2, 4:6]&lt;- round(data_summary2(J.trans[,2]),3)
-tab[3, 4:6]&lt;- round(data_summary2(F.trans[,1]),3)
-tab[4, 4:6]&lt;- round(data_summary2(F.trans[,2]),3)
-tab[5, 4:6]&lt;- round(data_summary2(F.recap[,1]),3)
-tab[6, 4:6]&lt;- round(data_summary2(F.recap[,2]),3)
-tab[7, 4:6]&lt;- round(data_summary2(B.recap[,1]),3)
+tab[1, 4:6]&lt;- round(data_summary95(O.surv[,2]),3)
+tab[2, 4:6]&lt;- round(data_summary95(O.trans[,2]),3)
+tab[3, 4:6]&lt;- round(data_summary95(A.trans[,1]),3)
+tab[4, 4:6]&lt;- round(data_summary95(A.trans[,2]),3)
+tab[5, 4:6]&lt;- round(data_summary95(A.recap[,1]),3)
+tab[6, 4:6]&lt;- round(data_summary95(A.recap[,2]),3)
+tab[7, 4:6]&lt;- round(data_summary95(B.recap[,1]),3)
 tab$important &lt;- ifelse( ((tab$LHDI95 &gt;= 0 &amp; tab$UHDI95&gt;=0) |
                              (tab$LHDI95 &lt;= 0 &amp; tab$UHDI95&lt;=0)) &amp;
                             (tab$LHDI95 != 0 &amp; tab$UHDI95!=0), 
                           &quot;yes&quot;, &quot;no&quot;) 
-tab$P[1] &lt;- round(sum(J.surv[,2]&gt;0)/length(J.surv[,2]),2)
-tab$P[2] &lt;- round(sum(J.trans[,2]&lt;0)/length(J.trans[,2]),2)
-tab$P[3] &lt;- round(sum(F.trans[,1]&gt;0)/length(F.trans[,1]),2)
-tab$P[4] &lt;- round(sum(F.trans[,2]&lt;0)/length(F.trans[,2]),2)
-tab$P[5] &lt;- round(sum(F.recap[,1]&gt;0)/length(F.recap[,1]),2)
-tab$P[6] &lt;- round(sum(F.recap[,2]&gt;0)/length(F.recap[,2]),2)
+tab$P[1] &lt;- round(sum(O.surv[,2]&gt;0)/length(O.surv[,2]),2)
+tab$P[2] &lt;- round(sum(O.trans[,2]&lt;0)/length(O.trans[,2]),2)
+tab$P[3] &lt;- round(sum(A.trans[,1]&gt;0)/length(A.trans[,1]),2)
+tab$P[4] &lt;- round(sum(A.trans[,2]&lt;0)/length(A.trans[,2]),2)
+tab$P[5] &lt;- round(sum(A.recap[,1]&gt;0)/length(A.recap[,1]),2)
+tab$P[6] &lt;- round(sum(A.recap[,2]&gt;0)/length(A.recap[,2]),2)
 tab$P[7] &lt;- round(sum(B.recap[,1]&gt;0)/length(B.recap[,1]),2)
-print(tab)</code></pre>
-</div>
-<div id="plot-differences" class="section level2">
-<h2>5.2 Plot Differences</h2>
-<pre class="r"><code># combine survival data
+print(tab)
+
+## ---- ipm postprocess 2 --------
+# combine survival data
 temp.df&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;First-year&quot;)
-temp.df1&lt;- data.frame(Draws=J.surv[,2], Cat=&quot;Sex&quot;, State=&quot;First-year&quot;)
+temp.df1&lt;- data.frame(Draws=O.surv[,2], Cat=&quot;Sex&quot;, State=&quot;First-year&quot;)
 temp.df2&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Breeder&quot;)
 temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;)
 temp.df4&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Non-breeder&quot;)
@@ -2079,8 +2059,8 @@ temp.df&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;First-year&
 temp.df1&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;First-year&quot;)
 temp.df2&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Breeder&quot;)
 temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;)
-temp.df4&lt;- data.frame(Draws=F.trans[,1], Cat=&quot;Hacked&quot;, State=&quot;Non-breeder&quot;)
-temp.df5&lt;- data.frame(Draws=F.trans[,2], Cat=&quot;Sex&quot;, State=&quot;Non-breeder&quot;)
+temp.df4&lt;- data.frame(Draws=A.trans[,1], Cat=&quot;Hacked&quot;, State=&quot;Non-breeder&quot;)
+temp.df5&lt;- data.frame(Draws=A.trans[,2], Cat=&quot;Sex&quot;, State=&quot;Non-breeder&quot;)
 df.trans&lt;- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
 df.trans$combined&lt;- factor(paste(df.trans$State, df.trans$Cat))
 df.trans$combined &lt;- factor(df.trans$combined, levels=levels(df.trans$combined)[c(3,4,5,6,1,2)])
@@ -2091,10 +2071,10 @@ temp.df3&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Breeder&quot;
 temp.df4&lt;- data.frame(Draws=B.recap[,1], Cat=&quot;Effort&quot;, State=&quot;Breeder&quot;)
 temp.df5&lt;- data.frame(Draws=0, Cat=&quot;Hacked&quot;, State=&quot;Non-breeder&quot;)
 temp.df6&lt;- data.frame(Draws=0, Cat=&quot;Sex&quot;, State=&quot;Non-breeder&quot;)
-temp.df7&lt;- data.frame(Draws=F.recap[,2], Cat=&quot;Effort&quot;, State=&quot;Non-breeder&quot;)
+temp.df7&lt;- data.frame(Draws=A.recap[,2], Cat=&quot;Effort&quot;, State=&quot;Non-breeder&quot;)
 df.recap&lt;- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
 df.recap$combined&lt;- factor(paste(df.recap$State, df.recap$Cat))
-df.recap$combined &lt;- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #&quot;Juvenile Hacked&quot;, &quot;Juvenile Sex&quot;, 
+df.recap$combined &lt;- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #&quot;First-year Hacked&quot;, &quot;First-year Sex&quot;, 
 # fix level order for plots
 ord &lt;- c(&quot;First-year&quot;,&quot;Non-breeder&quot;,&quot;Breeder&quot;)
 df.surv$State &lt;-  factor(df.surv$State, levels=ord, labels=ord) 
@@ -2102,23 +2082,6 @@ df.trans$State &lt;-  factor(df.trans$State, levels=ord, labels=ord)
 df.recap$State &lt;-  factor(df.recap$State, levels=ord[-1], labels=ord[-1]) 
 
 # plots
-library (ggplot2)
-library (gridExtra)
-source(&quot;HDIofMCMC.R&quot;)
-data_summary &lt;- function(x) {
-  m &lt;- median(x)
-  ymin &lt;- HDIofMCMC(x, credMass=0.85)[[1]]
-  ymax &lt;- HDIofMCMC(x, credMass=0.85)[[2]]
-  return(c(y=m,ymin=ymin,ymax=ymax))
-}
-
-data_summary2 &lt;- function(x) {
-  m &lt;- median(x)
-  ymin &lt;- HDIofMCMC(x, credMass=0.95)[[1]]
-  ymax &lt;- HDIofMCMC(x, credMass=0.95)[[2]]
-  return(c(y=m,ymin=ymin,ymax=ymax))
-}
-
 txt &lt;- 30
 lwd &lt;- 2
 lwd2 &lt;- 1
@@ -2129,8 +2092,8 @@ ps &lt;- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
   geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
   geom_violin(aes(fill=State)) + scale_fill_manual(values=colors) +
-  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  stat_summary(fun.data=data_summary85,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary95,  geom=&quot;pointrange&quot;, size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +  
   ylab(&quot;Survival \ndifference&quot;) + xlab (&quot;&quot;) +
   scale_x_discrete( labels=c(&quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;,&quot;Hacked&quot;, &quot;Sex&quot; )) + 
@@ -2140,8 +2103,8 @@ pt &lt;- ggplot(df.trans, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
   geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
   geom_violin(aes(fill=State)) +  scale_fill_manual(values= colors, drop=F) + 
-  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  stat_summary(fun.data=data_summary85,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary95,  geom=&quot;pointrange&quot;, size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab(&quot;Recruitment \ndifference&quot;) + xlab (&quot;&quot;) + 
   scale_x_discrete( labels=c(&quot;Hacked&quot;, &quot;Sex&quot;, &quot;Hacked&quot;, &quot;Sex&quot;,&quot;Hacked&quot;, &quot;Sex&quot; )) + 
@@ -2151,23 +2114,21 @@ pr &lt;- ggplot(df.recap, aes(x = combined, y = Draws, group=combined)) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5, 1),  labels=c(-0.5, 0, 0.5, 1), limits = c(-0.6, 1.0)) +
   geom_hline(yintercept=0, linetype=&quot;solid&quot;, size=lwd) +
   geom_violin(aes(fill=State)) +  scale_fill_manual(values=colors[-1]) +
-  stat_summary(fun.data=data_summary,  geom=&quot;pointrange&quot;, size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom=&quot;pointrange&quot;, size=lwd2) +
+  stat_summary(fun.data=data_summary85,  geom=&quot;pointrange&quot;, size=lwd) +
+  stat_summary(fun.data=data_summary95,  geom=&quot;pointrange&quot;, size=lwd2) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab(&quot;Resight \ndifference&quot;) + xlab (&quot;&quot;) + 
   scale_x_discrete( labels=c(&quot;Effort&quot;, &quot;Hacked&quot;, &quot;Sex&quot;, &quot;Effort&quot;, &quot;Hacked&quot;, &quot;Sex&quot; )) + 
   facet_wrap(~State, scales=&quot;free&quot;)
 
 
-png(&quot;.//figs//SurvivalDiffs_IPM_Reduced.png&quot;, height=800, width=800)
 grid.arrange(ps + theme(legend.position=&quot;none&quot;), 
              pt + theme(legend.position=&quot;none&quot;), 
              pr + theme(legend.position=&quot;none&quot;), 
              nrow=3,
              layout_matrix = rbind(c(1, 1, 1, 1, 1, 1),
                                    c(2, 2, 2, 2, 2, 2),
-                                   c(3, 3, 3, 3, 3, 3))) 
-dev.off()</code></pre>
+                                   c(3, 3, 3, 3, 3, 3))) </code></pre>
 <div class="figure">
 <img src="data:image/png;base64,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" alt="Fig. S5. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis." />
 <p class="caption">Fig. S5. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis.</p>
@@ -2235,7 +2196,6 @@ plt</code></pre>
 Fig. S6. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration.
 </p>
 </div>
-<pre class="r"><code># plot immigration and priors</code></pre>
 </div>
 <div id="literature-cited" class="section level1">
 <h1>7. Literature cited</h1>
