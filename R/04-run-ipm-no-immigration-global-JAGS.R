@@ -1,4 +1,13 @@
-
+## ---- ipm2 --------
+#################################
+# The model
+################################
+library (jagsUI)
+load(".\\data\\data-7states.Rdata")
+m<- c("ipm-jags-no-imm")
+modfl <- paste(".\\", m, ".txt", sep="")
+sink(modfl)
+cat("
     model{
     ####################################################
     ####################################################
@@ -62,80 +71,60 @@
     sigma.F ~ dunif(0,10)
     
     # Survival loops for demographic categories by sex, hacked, effort 
-    
-    sigma.AS.phi ~ dunif(0,10)
-    ASalpha <- logit(ASalpha1)
-    ASalpha1 ~ dunif(0, 1)
-    
-    sigma.BS.phi ~ dunif(0,10)
-    BSalpha <- logit(BSalpha1) 
-    BSalpha1 ~ dunif(0, 1)
-    
-    sigma.BAR.psi ~ dunif(0,10)
-    BARalpha <- logit(BARalpha1)
-    BARalpha1 ~ dunif(0, 1)
-    
-    sigma.pB ~ dunif(0,10)
-    
-    for (k in 1:2){
-    mu.pB[k]<- logit(mu.pB1[k])
-    mu.pB1[k] ~ dunif(0, 1)
-    } # k
-    
+    for (h in 1:2){
+    for (s in 1:2){
     for (t in 1:(n.yr-1)){
-    logit(eta.ASalpha[t]) <- ASalpha + eps.AS.phi[t]
-    eps.AS.phi[t] ~ dnorm(0, 1/(sigma.AS.phi*sigma.AS.phi) )
+    logit(eta.OSalpha[s,h,t]) <- OSalpha[s,h] + eps.OS.s[s,h,t]
+    logit(eta.ASalpha[s,h,t]) <- ASalpha[s,h] + eps.AS.s[s,h,t]
+    logit(eta.BSalpha[s,h,t]) <- BSalpha[s,h] + eps.BS.s[s,h,t]
+    logit(eta.ABRalpha[s,h,t]) <- ABRalpha[s,h] + eps.ABR.psi[s,h,t]    
+    logit(eta.OBRalpha[s,h,t]) <- OBRalpha[s,h] + eps.OBR.psi[s,h,t]    
+    logit(eta.BARalpha[s,h,t]) <- BARalpha[s,h] + eps.BAR.psi[s,h,t]
+    logit(eta.pA[s,h,t]) <- mu.pA[s,h,effort[t]] + eps.pA[s,h,t]
+    logit(eta.pB[s,h,t]) <- mu.pB[s,h,effort[t]] + eps.pB[s,h,t]
     
-    logit(eta.BSalpha[t]) <- BSalpha + eps.BS.phi[t]
-    eps.BS.phi[t] ~ dnorm(0, 1/(sigma.BS.phi*sigma.BS.phi) )    
-    
-    logit(eta.BARalpha[t]) <- BARalpha + eps.BAR.psi[t]
-    eps.BAR.psi[t] ~ dnorm(0, 1/(sigma.BAR.psi*sigma.BAR.psi))
-    
-    logit(eta.pB[t]) <- mu.pB[effort[t]] + eps.pB[t]
-    eps.pB[t] ~ dnorm(0, 1/(sigma.pB*sigma.pB) )
-    } #t
-    
-    for(s in 1:2){
-    sigma.OS.phi[s] ~ dunif(0,10)
-    OSalpha[s] <- logit(OSalpha1[s]) 
-    OSalpha1[s] ~ dunif(0, 1)
-    
-    
-    sigma.OBR.psi[s] ~ dunif(0,10)
-    OBRalpha[s] <- logit(OBRalpha1[s]) 
-    OBRalpha1[s] ~ dunif(0, 1)
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.OSalpha[s,t]) <- OSalpha[s] + eps.OS.phi[s,t]
-    eps.OS.phi[s,t] ~ dnorm(0, 1/(sigma.OS.phi[s]*sigma.OS.phi[s]) )
-    
-    logit(eta.OBRalpha[s,t]) <- OBRalpha[s] + eps.OBR.psi[s,t]
-    eps.OBR.psi[s,t] ~ dnorm(0, 1/(sigma.OBR.psi[s]*sigma.OBR.psi[s]) )
-    } #t
+    eps.BS.s[s,h,t] ~ dnorm(0, 1/(sigma.BS.s[s,h]*sigma.BS.s[s,h])) 
+    eps.AS.s[s,h,t] ~ dnorm(0, 1/(sigma.AS.s[s,h]*sigma.AS.s[s,h]))
+    eps.OS.s[s,h,t] ~ dnorm(0, 1/(sigma.OS.s[s,h]*sigma.OS.s[s,h]))
+    eps.OBR.psi[s,h,t] ~ dnorm(0, 1/(sigma.OBR.psi[s,h]*sigma.OBR.psi[s,h]))
+    eps.ABR.psi[s,h,t] ~ dnorm(0, 1/(sigma.ABR.psi[s,h]*sigma.ABR.psi[s,h]))
+    eps.BAR.psi[s,h,t] ~ dnorm(0, 1/(sigma.BAR.psi[s,h]*sigma.BAR.psi[s,h]))
+    eps.pA[s,h,t] ~ dnorm(0, 1/(sigma.pA[s,h]*sigma.pA[s,h]))     
+    eps.pB[s,h,t] ~ dnorm(0, 1/(sigma.pB[s,h]*sigma.pB[s,h]))
+    } } } #s sex #h hacked #t time
     
     for (h in 1:2){
-    sigma.ABR.psi[s,h] ~ dunif(0,10)
+    for (s in 1:2){
+    
+    for (k in 1:2){
+    mu.pB[s,h,k]<- logit(mu.pB1[s,h,k])
+    mu.pB1[s,h,k] ~ dunif(0, 1)
+    mu.pA[s,h,k] <- logit(mu.pA1[s,h,k])
+    mu.pA1[s,h,k] ~ dunif(0,1)
+    } #k effort
+    
+    OSalpha[s,h] <- logit(OSalpha1[s,h]) 
+    OSalpha1[s,h] ~ dunif(0, 1)
+    ASalpha[s,h] <- logit(ASalpha1[s,h])
+    ASalpha1[s,h] ~ dunif(0, 1)
+    BSalpha[s,h] <- logit(BSalpha1[s,h]) 
+    BSalpha1[s,h] ~ dunif(0, 1)
     ABRalpha[s,h] <- logit(ABRalpha1[s,h])
     ABRalpha1[s,h] ~ dunif(0, 1)
+    BARalpha[s,h] <- logit(BARalpha1[s,h])
+    BARalpha1[s,h] ~ dunif(0, 1)
+    OBRalpha[s,h] <- logit(OBRalpha1[s,h]) 
+    OBRalpha1[s,h] ~ dunif(0, 1)
     
-    for (t in 1:(n.yr-1)){
-    logit(eta.ABRalpha[s,h,t]) <- ABRalpha[s,h] + eps.ABR.psi[s,h,t]
-    eps.ABR.psi[s,h,t] ~ dnorm(0, 1/(sigma.ABR.psi[s,h]*sigma.ABR.psi[s,h]) )
-    } #t
-    } } #h #s
-    
-    for (h in 1:2){
-    sigma.pA[h] ~ dunif(0,10)
-    for (k in 1:2){
-    mu.pA[k,h] <- logit(mu.pA1[k,h])
-    mu.pA1[k,h] ~ dunif(0,1)
-    } # k
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.pA[h,t]) <- mu.pA[effort[t], h] + eps.pA[h,t]
-    eps.pA[h,t] ~ dnorm(0, 1/(sigma.pA[h]*sigma.pA[h]) )
-    }} #t #h
+    sigma.OS.s[s,h] ~ dunif(0,10)    
+    sigma.AS.s[s,h] ~ dunif(0,10)
+    sigma.BS.s[s,h] ~ dunif(0,10)
+    sigma.OBR.psi[s,h] ~ dunif(0,10)
+    sigma.ABR.psi[s,h] ~ dunif(0,10)
+    sigma.BAR.psi[s,h] ~ dunif(0,10)
+    sigma.pB[s,h] ~ dunif(0,10)
+    sigma.pA[s,h] ~ dunif(0,10)
+    }} # s h
     
     #######################
     # Derived params
@@ -151,25 +140,25 @@
     for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
     for (j in 1:n.ter){
     for (t in 3:(n.yr-1)){ 
-      log(prod.mu[t,j]) <- log(F[t]) + eps.prod[j] # link productivity to fecundity
-      } # t
-      eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  
+    log(prod.mu[t,j]) <- log(F[t]) + eps.prod[j] # link productivity to fecundity
+    } # t
+    eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  
     } # j
     
-  for (t in 1:(n.yr-1)){   
-      log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
-      eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
-  }    
+    for (t in 1:(n.yr-1)){ 
+    log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
+    eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
     
     ################################
     # Likelihood for counts
     ################################
-  for (t in 1:(n.yr-1)){ 
     # Number of wild born juvs
-    N[1,t+1] ~ dpois( (NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # first year males to breeders
+    N[1,t+1] ~ dpois( (
+    NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # first year males to breeders
     NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
     NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,1,t] + # nonbreeder male wild adults to breeder adults
-    NB[t]*eta.BSalpha[t]*(1-eta.BARalpha[t]) )* # breeders to breeders
+    NB[t]*eta.BSalpha[t]*(1-eta.BARalpha[t]) # breeders to breeders
+    )* 
     F[t+1]/2) 
     # first year to nonbreeder adults
     N[2,t+1] ~ dbin(eta.OSalpha[2,t]*(1-eta.OBRalpha[2,t]), NO[t] )
@@ -203,56 +192,22 @@
     l.countJM[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM)) # first year males
     } # t
     
-    ###################
-    # Assess fit of the state-space models for counts
-    # Step 1: Compute statistic for observed data
-    # Step 2: Use discrepancy measure: mean absolute error
-    # Step 3: Use test statistic: number of turns
-    ###################
-    for (t in 2:n.yr){ # skip yr 1 because its known with certainty
-      c.expB[t] <- NB[t] # expected counts adult breeder
-      c.expA[t] <- NF[t] # nonbreeder
-      c.expO[t] <- NO[t] # first year
-      c.obsB[t] <- exp(l.countBM[t]) # convert back to count
-      c.obsA[t] <- exp(l.countFM[t])
-      c.obsO[t] <- exp(l.countJM[t])
-      dssm.obsB[t] <- abs( (c.obsB[t] - c.expB[t]) / c.obsB[t] )
-      dssm.obsA[t] <- abs( (c.obsA[t] - c.expA[t]) / c.obsA[t] )
-      dssm.obsO[t] <- abs( (c.obsO[t] - c.expO[t]) / c.obsO[t] )
-      } # t
-      dmape.obs[1] <- sum(dssm.obsB)
-      dmape.obs[2] <- sum(dssm.obsA)
-      dmape.obs[3] <- sum(dssm.obsO)
-    # Compute fit statistic for replicate data
-    # Mean absolute error
-    for (t in 2:n.yr){ # skip yr 1 because it is known with certainty
-      c.repB[t] ~ dnorm(log(NB[t]), 1/(sigma.BM*sigma.BM) ) # expected counts
-      c.repA[t] ~ dnorm(log(NF[t]), 1/(sigma.AM*sigma.AM) ) 
-      c.repO[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM) ) 
-      dssm.repB[t] <- abs( (c.repB[t] - c.expB[t]) / c.repB[t] )
-      dssm.repA[t] <- abs( (c.repA[t] - c.expA[t]) / c.repA[t] )
-      dssm.repO[t] <- abs( (c.repO[t] - c.expO[t]) / c.repO[t] )
-    } # t
-    dmape.rep[1] <- sum(dssm.repB)
-    dmape.rep[2] <- sum(dssm.repA)
-    dmape.rep[3] <- sum(dssm.repO)
-
     ################################
     # Likelihood for survival
     ################################
     for (i in 1:nind){
     for (t in 1:(n.yr-1)){
     #Survival
-    phiO[i,t] <- eta.OSalpha[sex[i],t] # first year
-    phiA[i,t] <- eta.ASalpha[t] # nonbreeder
-    phiB[i,t] <- eta.BSalpha[t] # breeder
+    phiO[i,t] <- eta.OSalpha[sex[i],hacked[i], t] # first year
+    phiA[i,t] <- eta.ASalpha[sex[i],hacked[i], t] # nonbreeder
+    phiB[i,t] <- eta.BSalpha[sex[i],hacked[i], t] # breeder
     #Recruitment
-    psiOB[i,t] <- eta.OBRalpha[sex[i],t] # first year to breeder
-    psiAB[i,t] <- eta.ABRalpha[sex[i], hacked[i],t] # nonbreederto breeder
-    psiBA[i,t] <- eta.BARalpha[t] # breeder to nonbreeder
+    psiOB[i,t] <- eta.OBRalpha[sex[i],hacked[i], t] # first year to breeder
+    psiAB[i,t] <- eta.ABRalpha[sex[i],hacked[i], t] # nonbreeder to breeder
+    psiBA[i,t] <- eta.BARalpha[sex[i],hacked[i], t] # breeder to nonbreeder
     #Re-encounter
-    pA[i,t] <- eta.pA[hacked[i],t] # resight of nonbreeders
-    pB[i,t] <- eta.pB[t]  # resight of breeders
+    pA[i,t] <- eta.pA[sex[i],hacked[i], t] # resight of nonbreeders
+    pB[i,t] <- eta.pB[sex[i],hacked[i], t]  # resight of breeders
     }#t
     }#i
     
@@ -316,4 +271,53 @@
     } #i
     
     } #model
-    
+    ",fill = TRUE)
+sink()
+
+datl$y[datl$y==5] <- 4
+
+get.first <- function(x) min(which(x!=4))
+f <- apply(datl$y, 1, get.first)
+
+# Function to create known latent states z
+known.state.ms <- function(ms, notseen){
+  state <- ms
+  state[state==notseen] <- NA
+  for (i in 1:dim(ms)[1]){
+    m <- min(which(!is.na(state[i,])))
+    state[i,m] <- NA
+  }
+  return(state)
+}
+
+ms.init.z <- function(ch, f){
+  for (i in 1:dim(ch)[1]){ch[i,1:f[i]] <- NA}
+  states <- max(ch, na.rm = TRUE)
+  known.states <- 2:(states-1)
+  v <- which(ch==states)
+  ch[-v] <- NA
+  ch[v] <- sample(known.states, length(v), replace = TRUE)
+  return(ch)
+}
+
+inits <- function(){list(z = ms.init.z(datl$y, f) )}
+
+params <- c(
+  "N", "NB", "NF", "NO", "NI", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
+  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F", "mu.F",
+  #  "omegaA", "omegaB", "omegaA1", "omegaB1", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
+  "OSalpha", "ASalpha", "BSalpha", "OBRalpha", "ABRalpha", "BARalpha",  "mu.pA", "mu.pB",
+  "OSalpha1", "ASalpha1", "BSalpha1","OBRalpha1", "ABRalpha1", "BARalpha1","mu.pA1", "mu.pB1",
+  "eps.OS.s", "eps.AS.s", "eps.BS.s", "eps.OBR.psi", "eps.ABR.psi", "eps.BAR.psi", "eps.pA", "eps.pB", 
+  "eta.OSalpha", "eta.ASalpha", "eta.BSalpha", "eta.OBRalpha", "eta.ABRalpha", "eta.BARalpha", "eta.pA",  "eta.pB", 
+  "sigma.OS.s", "sigma.AS.s", "sigma.BS.s", "sigma.OBR.psi", "sigma.ABR.psi", "sigma.BAR.psi", "sigma.pA", "sigma.pB"  
+)
+
+datl$z <- known.state.ms(datl$y, 4)
+
+# MCMC settings
+ni <- 200000; nt <- 50; nb <- 150000; nc <- 3; na <- 1000 
+out <- jags(datl, inits, params, modfl,  
+            n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
+            parallel=T, module=c("glm", "bugs"))
+#save(file=paste("./", m, ".Rdata", sep=""), list="out")

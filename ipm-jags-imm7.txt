@@ -68,15 +68,10 @@
     sigma.AM ~ dunif(0,10)
     sigma.OM ~ dunif(0,10)
     sigma.prod ~ dunif(0,10)
-    # sigma.omegaB ~ dunif(0,10)
-    # sigma.omegaA ~ dunif(0,10)
-    # sigma.em ~ dunif(0,10)
     for (j in 1:n.ter){ eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  } #j
     
-    omegaB1 ~ dunif(0, 3) # upper limit of 10 imm per breeder to help run model
-    omegaA1 ~ dunif(0, 3) # upper limit of 10 imm per nonbreeder to help run model
-    l.mu.em <- logit(mu.em)
-    mu.em ~ dunif(0,1)
+    omega1 ~ dunif(0,0.10) # upper limit of 10 imm per breeder to help run model
+    em1 ~ dunif(0,0.10)
     for (m in 1:2){
       mu.F[m] ~ dunif(0,10) # limits to help run model
     } # m
@@ -167,12 +162,8 @@ for (t in 3:(n.yr-1)){
     ################################
     # Likelihood for immigration and emigration
     ###############################
-      log(omegaB[t]) <- log(omegaB1) #+ eps.omegaB[t] # breeder
-      log(omegaA[t]) <- log(omegaA1) #+ eps.omegaA[t] # nonbreeder
-      logit(em[t]) <-  l.mu.em #+ eps.em[t]
-      #eps.omegaB[t] ~ dnorm(0, 1/(sigma.omegaB*sigma.omegaB))
-      #eps.omegaA[t] ~ dnorm(0, 1/(sigma.omegaA*sigma.omegaA))
-      #eps.em[t] ~ dnorm(0, 1/(sigma.em*sigma.em))
+      omega[t] <- omega1 
+      em[t] <-  em1 
 
       # ################################
       # # Likelihood for counts
@@ -200,9 +191,9 @@ for (t in 3:(n.yr-1)){
       # Nonbreeder hacked adults to breeders
       N[9,t+1] ~ dbin( eta.ASalpha[t]*eta.ABRalpha[2,2,t], NF[t] )
       # Immigrants to breeders
-      N[10,t+1] ~ dpois( NB[t]*omegaB[t] )
+      N[10,t+1] ~ dpois( NB[t]*omega[t] )
       # Immigrants to nonbreeders
-      N[11,t+1] ~ dpois( NF[t]*omegaA[t] )
+      N[11,t+1] ~ dpois( NF[t]*omega[t] )
       # Breeders to emigrants
       N[12,t+1] ~ dbin( em[t], NB[t] )
       # NonBreeders to emigrants

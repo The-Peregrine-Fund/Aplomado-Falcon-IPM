@@ -1,4 +1,13 @@
-
+## ---- ipm2 --------
+#################################
+# The model
+################################
+library (jagsUI)
+load(".\\data\\data-7states.Rdata")
+m<- c("ipm-jags-no-imm")
+modfl <- paste(".\\", m, ".txt", sep="")
+sink(modfl)
+cat("
     model{
     ####################################################
     ####################################################
@@ -209,7 +218,7 @@
     # Step 2: Use discrepancy measure: mean absolute error
     # Step 3: Use test statistic: number of turns
     ###################
-    for (t in 2:n.yr){ # skip yr 1 because its known with certainty
+    for (t in 1:n.yr){ 
       c.expB[t] <- NB[t] # expected counts adult breeder
       c.expA[t] <- NF[t] # nonbreeder
       c.expO[t] <- NO[t] # first year
@@ -225,7 +234,7 @@
       dmape.obs[3] <- sum(dssm.obsO)
     # Compute fit statistic for replicate data
     # Mean absolute error
-    for (t in 2:n.yr){ # skip yr 1 because it is known with certainty
+    for (t in 1:n.yr){ 
       c.repB[t] ~ dnorm(log(NB[t]), 1/(sigma.BM*sigma.BM) ) # expected counts
       c.repA[t] ~ dnorm(log(NF[t]), 1/(sigma.AM*sigma.AM) ) 
       c.repO[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM) ) 
@@ -316,4 +325,55 @@
     } #i
     
     } #model
-    
+    ",fill = TRUE)
+sink()
+
+datl$y[datl$y==5] <- 4
+
+get.first <- function(x) min(which(x!=4))
+f <- apply(datl$y, 1, get.first)
+
+# Function to create known latent states z
+known.state.ms <- function(ms, notseen){
+  state <- ms
+  state[state==notseen] <- NA
+  for (i in 1:dim(ms)[1]){
+    m <- min(which(!is.na(state[i,])))
+    state[i,m] <- NA
+  }
+  return(state)
+}
+
+ms.init.z <- function(ch, f){
+  for (i in 1:dim(ch)[1]){ch[i,1:f[i]] <- NA}
+  states <- max(ch, na.rm = TRUE)
+  known.states <- 2:(states-1)
+  v <- which(ch==states)
+  ch[-v] <- NA
+  ch[v] <- sample(known.states, length(v), replace = TRUE)
+  return(ch)
+}
+
+inits <- function(){list(z = ms.init.z(datl$y, f) )}
+
+params <- c(
+  "N", "NB", "NF", "NO", "NI", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
+  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F", "mu.F",
+  "dmape.obs", "dmape.rep",
+  #  "omegaA", "omegaB", "omegaA1", "omegaB1", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
+  "OSalpha", "ASalpha", "BSalpha", "OBRalpha", "ABRalpha", "BARalpha",  "mu.pA", "mu.pB",
+  "OSalpha1", "ASalpha1", "BSalpha1","OBRalpha1", "ABRalpha1", "BARalpha1","mu.pA1", "mu.pB1",
+  "eps.OS.s", "eps.AS.s", "eps.BS.s", "eps.OBR.psi", "eps.ABR.psi", "eps.BAR.psi", "eps.pA", "eps.pB", 
+  "eta.OSalpha", "eta.ASalpha", "eta.BSalpha", "eta.OBRalpha", "eta.ABRalpha", "eta.BARalpha", "eta.pA",  "eta.pB", 
+  "sigma.OS.s", "sigma.AS.s", "sigma.BS.s", "sigma.OBR.psi", "sigma.ABR.psi", "sigma.BAR.psi", "sigma.pA", "sigma.pB"  
+)
+
+datl$z <- known.state.ms(datl$y, 4)
+
+# MCMC settings
+ni <- 200000; nt <- 50; nb <- 150000; nc <- 3; na <- 1000 
+ni <- 200; nt <- 1; nb <- 150; nc <- 3; na <- 100 
+out <- jags(datl, inits, params, modfl,  
+            n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
+            parallel=T, module=c("glm", "bugs"))
+#save(file=paste("./", m, ".Rdata", sep=""), list="out")
