@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::read_chunk('R/01-run-survival-global-JAGS.R')
 ```
 
-Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2021. LONG-TERM DEMOGRAPHY OF A REINTRODUCED AND ISOLATED POPULATION OF ENDANGERED FALCONS. Biological Conservation.
+Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2022. Long-term Demography of a Reintroduced and Isolated Population of Endangered Falcons. Global Ecology and Conservation.
 
 Data and scripts used in analyses can be found at https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM
 

@@ -53,29 +53,30 @@
     # N[11,1] <- 0  # Immigrant to nonbreeder
     F[1] <- 0 # No breeding during the first year, all hacked birds
     
-    sigma.BM ~ dnorm(0, 1/(2*2) )T(0,)
-    sigma.AM ~ dnorm(0, 1/(2*2) )T(0,)
-    sigma.OM ~ dnorm(0, 1/(2*2) )T(0,) 
-    sigma.prod ~ dunif(0,10)
+    theta ~ dunif(0,1)
+    sigma.BM ~ dexp(1)
+    sigma.AM ~ dexp(1)
+    sigma.OM ~ dexp(1) 
+    sigma.prod ~ dexp(1)
     
     for (m in 1:2){ mu.F[m] ~ dunif(0,5) } # m # limits to help run model
-    sigma.F ~ dunif(0,10)
+    sigma.F ~ dexp(1)
     
     # Survival loops for demographic categories by sex, hacked, effort 
     
-    sigma.AS.phi ~ dunif(0,10)
+    sigma.AS.phi ~ dexp(1)
     ASalpha <- logit(ASalpha1)
     ASalpha1 ~ dunif(0, 1)
     
-    sigma.BS.phi ~ dunif(0,10)
+    sigma.BS.phi ~ dexp(1)
     BSalpha <- logit(BSalpha1) 
     BSalpha1 ~ dunif(0, 1)
     
-    sigma.BAR.psi ~ dunif(0,10)
+    sigma.BAR.psi ~ dexp(1)
     BARalpha <- logit(BARalpha1)
     BARalpha1 ~ dunif(0, 1)
     
-    sigma.pB ~ dunif(0,10)
+    sigma.pB ~ dexp(1)
     
     for (k in 1:2){
     mu.pB[k]<- logit(mu.pB1[k])
@@ -97,12 +98,12 @@
     } #t
     
     for(s in 1:2){
-    sigma.OS.phi[s] ~ dunif(0,10)
+    sigma.OS.phi[s] ~ dexp(1)
     OSalpha[s] <- logit(OSalpha1[s]) 
     OSalpha1[s] ~ dunif(0, 1)
     
     
-    sigma.OBR.psi[s] ~ dunif(0,10)
+    sigma.OBR.psi[s] ~ dexp(1)
     OBRalpha[s] <- logit(OBRalpha1[s]) 
     OBRalpha1[s] ~ dunif(0, 1)
     
@@ -115,7 +116,7 @@
     } #t
     
     for (h in 1:2){
-    sigma.ABR.psi[s,h] ~ dunif(0,10)
+    sigma.ABR.psi[s,h] ~ dexp(1)
     ABRalpha[s,h] <- logit(ABRalpha1[s,h])
     ABRalpha1[s,h] ~ dunif(0, 1)
     
@@ -126,7 +127,7 @@
     } } #h #s
     
     for (h in 1:2){
-    sigma.pA[h] ~ dunif(0,10)
+    sigma.pA[h] ~ dexp(1)
     for (k in 1:2){
     mu.pA[k,h] <- logit(mu.pA1[k,h])
     mu.pA1[k,h] ~ dunif(0,1)
@@ -148,19 +149,48 @@
     ###############################
     # Likelihood for productivity
     ###############################
-    for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
+  # for (t in 3:(n.yr-1)){
+  #   tprod[t] ~ dpois(F[t]*NB[t])
+  #   log(F[t]) <- mu.F[manage[t+1] + eps.F[t+1]
+  #   eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
+  #   } # t
+
+    for (k in 1:K){ 
+        prod[k] ~ dpois( zs[k]* prod.mu[year.p[k] , ter[k]] ) 
+        zs[k] ~ dbern(theta)
+} # k
     for (j in 1:n.ter){
-    for (t in 3:(n.yr-1)){ 
+    for (t in 3:(n.yr-1)){
       log(prod.mu[t,j]) <- log(F[t]) + eps.prod[j] # link productivity to fecundity
       } # t
-      eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  
+      eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))
     } # j
-    
-  for (t in 1:(n.yr-1)){   
+
+  for (t in 1:(n.yr-1)){
       log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
       eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
-  }    
-    
+  }    # t
+    # Posterior predictive check for Poisson fecundity model
+    # 1. Compute fit statistic for observed data
+    # 1.1 Discrepancy measure: deviance
+     for (k in 1:K){
+        J.exp[k] <- prod.mu[year.p[k] , ter[k]]
+        d.obs[k] <- prod[k]* log(prod[k]/J.exp[k]) - (prod[k]-J.exp[k])
+     } # k
+    dd.obs <- sum(d.obs)
+    # 1.2 Compute test statistic variance-mean ratio
+    tvm.obs <- sd(prod)^2/mean(prod)
+    # 2. Compute fit statistic for replicate data
+    # 2.1 Discrepancy measure: mean absolute error
+      for (k in 1:K){ 
+        z.rep[k] ~ dbern(theta)
+        J.rep[k] ~ dpois(z.rep[k]*prod.mu[year.p[k] , ter[k]])
+        d.rep[k] <- J.rep[k]*log(J.rep[k]/J.exp[k]) - (J.rep[k]-J.exp[k])
+      } # k 
+      dd.rep <- sum(d.rep)
+    # compute test statistic variance-mean ratio
+    tvm.rep <- sd(J.rep)^2/mean(J.rep)
+
     ################################
     # Likelihood for counts
     ################################
@@ -209,34 +239,72 @@
     # Step 2: Use discrepancy measure: mean absolute error
     # Step 3: Use test statistic: number of turns
     ###################
-    for (t in 2:n.yr){ # skip yr 1 because its known with certainty
+    for (t in 1:n.yr){ 
       c.expB[t] <- NB[t] # expected counts adult breeder
       c.expA[t] <- NF[t] # nonbreeder
       c.expO[t] <- NO[t] # first year
       c.obsB[t] <- exp(l.countBM[t]) # convert back to count
       c.obsA[t] <- exp(l.countFM[t])
       c.obsO[t] <- exp(l.countJM[t])
-      dssm.obsB[t] <- abs( (c.obsB[t] - c.expB[t]) / c.obsB[t] )
-      dssm.obsA[t] <- abs( (c.obsA[t] - c.expA[t]) / c.obsA[t] )
-      dssm.obsO[t] <- abs( (c.obsO[t] - c.expO[t]) / c.obsO[t] )
+      dssm.obsB[t] <- abs( (c.obsB[t] - c.expB[t]) / c.obsB[t]  )
+      dssm.obsA[t] <- abs( (c.obsA[t] - c.expA[t]) / c.obsA[t]  )
+      dssm.obsO[t] <- abs( (c.obsO[t] - c.expO[t]) / c.obsO[t]  )
       } # t
       dmape.obs[1] <- sum(dssm.obsB)
       dmape.obs[2] <- sum(dssm.obsA)
       dmape.obs[3] <- sum(dssm.obsO)
     # Compute fit statistic for replicate data
     # Mean absolute error
-    for (t in 2:n.yr){ # skip yr 1 because it is known with certainty
+  c.repA[1] <- 0
+  c.repB[1] <- 0
+  c.repO[1] <- 0
+    for (t in 2:n.yr){ 
+      # NB2[t]<- step(NB[t])*NB[t] + (1-step(NB[t]))*0.001 # prevent log(0) by changing zeroes a small number
+      # NF2[t]<- step(NF[t])*NF[t] + (1-step(NF[t]))*0.001 # prevent log(0) by changing zeroes a small number
+      # NO2[t]<- step(NO[t])*NO[t] + (1-step(NO[t]))*0.001 # prevent log(0) by changing zeroes a small number
       c.repB[t] ~ dnorm(log(NB[t]), 1/(sigma.BM*sigma.BM) ) # expected counts
       c.repA[t] ~ dnorm(log(NF[t]), 1/(sigma.AM*sigma.AM) ) 
       c.repO[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM) ) 
+    } # t
+    for (t in 1:n.yr){ 
       dssm.repB[t] <- abs( (c.repB[t] - c.expB[t]) / c.repB[t] )
       dssm.repA[t] <- abs( (c.repA[t] - c.expA[t]) / c.repA[t] )
       dssm.repO[t] <- abs( (c.repO[t] - c.expO[t]) / c.repO[t] )
     } # t
-    dmape.rep[1] <- sum(dssm.repB)
-    dmape.rep[2] <- sum(dssm.repA)
-    dmape.rep[3] <- sum(dssm.repO)
+    dmape.rep[1] <- sum(dssm.repB[2:n.yr])
+    dmape.rep[2] <- sum(dssm.repA[2:n.yr])
+    dmape.rep[3] <- sum(dssm.repO[2:n.yr])
 
+# Test statistic for number of turns
+    for (t in 1:(n.yr-2)){
+      tt1.obsB[t] <- step(l.countBM[t+2] - l.countBM[t+1])
+      tt2.obsB[t] <- step(l.countBM[t+1] - l.countBM[t])
+      tt3.obsB[t] <- equals(tt1.obsB[t] + tt2.obsB[t], 1)
+      tt1.obsA[t] <- step(l.countFM[t+2] - l.countFM[t+1])
+      tt2.obsA[t] <- step(l.countFM[t+1] - l.countFM[t])
+      tt3.obsA[t] <- equals(tt1.obsA[t] + tt2.obsA[t], 1)
+      tt1.obsO[t] <- step(l.countJM[t+2] - l.countJM[t+1])
+      tt2.obsO[t] <- step(l.countJM[t+1] - l.countJM[t])
+      tt3.obsO[t] <- equals(tt1.obsO[t] + tt2.obsO[t], 1)
+} # t
+    tturn.obs[1] <- sum(tt3.obsB)
+    tturn.obs[2] <- sum(tt3.obsA)
+    tturn.obs[3] <- sum(tt3.obsO)
+    
+    for (t in 1:(n.yr-2)){
+      tt1.repB[t] <- step(c.repB[t+2] - c.repB[t+1])
+      tt2.repB[t] <- step(c.repB[t+1] - c.repB[t])
+      tt3.repB[t] <- equals(tt1.repB[t] + tt2.repB[t], 1)
+      tt1.repA[t] <- step(c.repA[t+2] - c.repA[t+1])
+      tt2.repA[t] <- step(c.repA[t+1] - c.repA[t])
+      tt3.repA[t] <- equals(tt1.repA[t] + tt2.repA[t], 1)
+      tt1.repO[t] <- step(c.repO[t+2] - c.repO[t+1])
+      tt2.repO[t] <- step(c.repO[t+1] - c.repO[t])
+      tt3.repO[t] <- equals(tt1.repO[t] + tt2.repO[t], 1)
+    } # t
+    tturn.rep[1] <- sum(tt3.repB)
+    tturn.rep[2] <- sum(tt3.repA)
+    tturn.rep[3] <- sum(tt3.repO)
     ################################
     # Likelihood for survival
     ################################
