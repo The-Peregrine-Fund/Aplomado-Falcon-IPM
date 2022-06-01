@@ -53,26 +53,26 @@ cat("
     l.mu.em <- logit(mu.em)
     mu.em ~ dunif(0,1)
 
-    sigma.AS.s ~ dunif(0,10)
+    sigma.AS.s ~ dnorm(0, 1/(2*2) )T(0,)
     ASalpha <- logit(ASalpha1)
     ASalpha1 ~ dunif(0, 1)
     
-    sigma.BS.s ~ dunif(0,10)
+    sigma.BS.s ~ dnorm(0, 1/(2*2) )T(0,)
     BSalpha <- logit(BSalpha1) 
     BSalpha1 ~ dunif(0, 1)
     
-    sigma.BAR.psi ~ dunif(0,10)
+    sigma.BAR.psi ~ dnorm(0, 1/(2*2) )T(0,)
     BARalpha <- logit(BARalpha1)
     BARalpha1 ~ dunif(0, 1)
     r ~ dunif(0, 1)
-    sigma.pB ~ dunif(0,10)
-    sigma.pA ~ dunif(0,10)
+    sigma.pB ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.pA ~ dnorm(0, 1/(2*2) )T(0,)
     
     for (k in 1:2){
     mu.pB[k]<- logit(mu.pB1[k])
     mu.pB1[k] ~ dunif(0, 1)
     mu.pA[k] <- logit(mu.pA1[k])
-    mu.pA1[k] ~ dunif(0,1)
+    mu.pA1[k] ~ dunif(0, 1)
     } # k
     
     for (t in 1:(n.yr-1)){
@@ -87,10 +87,10 @@ cat("
     } #t
     
     for(s in 1:2){
-    sigma.OS.s[s] ~ dunif(0,10)
+    sigma.OS.s[s] ~ dnorm(0, 1/(2*2) )T(0,)
     OSalpha[s] <- logit(OSalpha1[s]) 
     OSalpha1[s] ~ dunif(0, 1)
-    sigma.OBR.psi[s] ~ dunif(0,10)
+    sigma.OBR.psi[s] ~ dnorm(0, 1/(2*2) )T(0,)
     OBRalpha[s] <- logit(OBRalpha1[s]) 
     OBRalpha1[s] ~ dunif(0, 1)
     
@@ -102,7 +102,7 @@ cat("
     } #t
     
     for (h in 1:2){
-    sigma.ABR.psi[s,h] ~ dunif(0,10)
+    sigma.ABR.psi[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
     ABRalpha[s,h] <- logit(ABRalpha1[s,h])
     ABRalpha1[s,h] ~ dunif(0, 1)
     

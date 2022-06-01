@@ -100,14 +100,14 @@ cat("
     OBRalpha[s,h] <- logit(OBRalpha1[s,h]) 
     OBRalpha1[s,h] ~ dunif(0, 1)
 
-    sigma.OS.s[s,h] ~ dunif(0,10)    
-    sigma.AS.s[s,h] ~ dunif(0,10)
-    sigma.BS.s[s,h] ~ dunif(0,10)
-    sigma.OBR.psi[s,h] ~ dunif(0,10)
-    sigma.ABR.psi[s,h] ~ dunif(0,10)
-    sigma.BAR.psi[s,h] ~ dunif(0,10)
-    sigma.pB[s,h] ~ dunif(0,10)
-    sigma.pA[s,h] ~ dunif(0,10)
+    sigma.OS.s[s,h] ~ dnorm(0, 1/(2*2) )T(0,)   
+    sigma.AS.s[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.BS.s[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.OBR.psi[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.ABR.psi[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.BAR.psi[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.pB[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
+    sigma.pA[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
     }} # s h
 
     for (t in 1:(n.yr-1)){

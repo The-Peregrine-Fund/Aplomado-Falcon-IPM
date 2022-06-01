@@ -1,5 +1,5 @@
 ## ---- ipm postprocess 1 --------
-load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
+load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
 # load(".\\ipm-jags-no-imm.Rdata")
 library (jagsUI)
 # plots
@@ -7,7 +7,7 @@ library (ggplot2)
 library (gridExtra)
 library (tidybayes)
 # Function to compute highest density interval. From Kruschke 2011.
-source("HDIofMCMC.R")
+source("R\\HDIofMCMC.R")
 
 data_summary <- function(x) {
   m <- median(x)
@@ -23,37 +23,37 @@ data_summary2 <- function(x) {
   return(c(y=m,ymin=ymin,ymax=ymax))
 }
 
-J.surv <- J.trans <- F.surv <- F.trans <- B.surv <- B.trans <- array(NA, dim=c(dim(out$sims.list$JSalpha1)[1],3))
-B.recap <-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
-F.recap <-array(NA, dim=c(dim(out$sims.list$mu.pF1)[1],2))
+O.surv <- O.trans <- A.surv <- A.trans <- B.surv <- B.trans <- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
+B.recap <-array(NA, dim=c(dim(out$sims.list$mu.pB1)[1],2))
+A.recap <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],2))
 ##########################
 # Juveniles
 #########################
 # Survival
 # female - male
-J.surv[,2]<- out$sims.list$JSalpha1[,1] - out$sims.list$JSalpha1[,2] 
+O.surv[,2]<- out$sims.list$OSalpha1[,1] - out$sims.list$OSalpha1[,2] 
 # Recruitment
 # female - male
-J.trans[,2]<- out$sims.list$JBRalpha1[,1] - out$sims.list$JBRalpha1[,2]
+O.trans[,2]<- out$sims.list$OBRalpha1[,1] - out$sims.list$OBRalpha1[,2]
 
 ##########################
 # Floaters
 #########################
 # Recruitment
 # wild - hacked
-F.trans[,1]<- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,2,1])/2 -
-  (out$sims.list$FBRalpha1[,1,2] + out$sims.list$FBRalpha1[,2,2])/2
+A.trans[,1]<- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,2,1])/2 -
+  (out$sims.list$ABRalpha1[,1,2] + out$sims.list$ABRalpha1[,2,2])/2
 # female - male
-F.trans[,2]<- (out$sims.list$FBRalpha1[,1,1] + out$sims.list$FBRalpha1[,1,2])/2 -
-  (out$sims.list$FBRalpha1[,2,1] + out$sims.list$FBRalpha1[,2,2])/2
+A.trans[,2]<- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,1,2])/2 -
+  (out$sims.list$ABRalpha1[,2,1] + out$sims.list$ABRalpha1[,2,2])/2
 # Recapture prob  
 # wild - hacked
 # mu.pF1 [effort, h]
-F.recap[,1] <- (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,2,1])/2 - 
-              (out$sims.list$mu.pF1[,1,2] + out$sims.list$mu.pF1[,2,2])/2
+A.recap[,1] <- (out$sims.list$mu.pA1[,1,1] + out$sims.list$mu.pA1[,2,1])/2 - 
+              (out$sims.list$mu.pA1[,1,2] + out$sims.list$mu.pA1[,2,2])/2
 # high effort - low effort
-F.recap[,2] <- (out$sims.list$mu.pF1[,2,1] + out$sims.list$mu.pF1[,2,2])/2 - 
-            (out$sims.list$mu.pF1[,1,1] + out$sims.list$mu.pF1[,1,2])/2
+A.recap[,2] <- (out$sims.list$mu.pA1[,2,1] + out$sims.list$mu.pA1[,2,2])/2 - 
+            (out$sims.list$mu.pA1[,1,1] + out$sims.list$mu.pA1[,1,2])/2
 # mu.pB[effort[t]]
 # high effort - low effort
 B.recap[,1] <- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] 
@@ -62,30 +62,30 @@ tab <- data.frame(stage= c("First-year", "First-year", "Nonbreeder", "Nonbreeder
                   param= c("Survival", "Transition", "Transition", "Transition", "Resight", "Resight", "Resight"),
                   comp= c("Sex", "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
                   median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
-tab[1, 4:6]<- round(data_summary2(J.surv[,2]),3)
-tab[2, 4:6]<- round(data_summary2(J.trans[,2]),3)
-tab[3, 4:6]<- round(data_summary2(F.trans[,1]),3)
-tab[4, 4:6]<- round(data_summary2(F.trans[,2]),3)
-tab[5, 4:6]<- round(data_summary2(F.recap[,1]),3)
-tab[6, 4:6]<- round(data_summary2(F.recap[,2]),3)
+tab[1, 4:6]<- round(data_summary2(O.surv[,2]),3)
+tab[2, 4:6]<- round(data_summary2(O.trans[,2]),3)
+tab[3, 4:6]<- round(data_summary2(A.trans[,1]),3)
+tab[4, 4:6]<- round(data_summary2(A.trans[,2]),3)
+tab[5, 4:6]<- round(data_summary2(A.recap[,1]),3)
+tab[6, 4:6]<- round(data_summary2(A.recap[,2]),3)
 tab[7, 4:6]<- round(data_summary2(B.recap[,1]),3)
 tab$important <- ifelse( ((tab$LHDI95 >= 0 & tab$UHDI95>=0) |
                              (tab$LHDI95 <= 0 & tab$UHDI95<=0)) &
                             (tab$LHDI95 != 0 & tab$UHDI95!=0), 
                           "yes", "no") 
-tab$P[1] <- round(sum(J.surv[,2]>0)/length(J.surv[,2]),2)
-tab$P[2] <- round(sum(J.trans[,2]<0)/length(J.trans[,2]),2)
-tab$P[3] <- round(sum(F.trans[,1]>0)/length(F.trans[,1]),2)
-tab$P[4] <- round(sum(F.trans[,2]<0)/length(F.trans[,2]),2)
-tab$P[5] <- round(sum(F.recap[,1]>0)/length(F.recap[,1]),2)
-tab$P[6] <- round(sum(F.recap[,2]>0)/length(F.recap[,2]),2)
+tab$P[1] <- round(sum(O.surv[,2]>0)/length(O.surv[,2]),2)
+tab$P[2] <- round(sum(O.trans[,2]<0)/length(O.trans[,2]),2)
+tab$P[3] <- round(sum(A.trans[,1]>0)/length(A.trans[,1]),2)
+tab$P[4] <- round(sum(A.trans[,2]<0)/length(A.trans[,2]),2)
+tab$P[5] <- round(sum(A.recap[,1]>0)/length(A.recap[,1]),2)
+tab$P[6] <- round(sum(A.recap[,2]>0)/length(A.recap[,2]),2)
 tab$P[7] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
 print(tab)
 
 ## ---- ipm postprocess 2 --------
 # combine survival data
 temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
-temp.df1<- data.frame(Draws=J.surv[,2], Cat="Sex", State="First-year")
+temp.df1<- data.frame(Draws=O.surv[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
@@ -99,8 +99,8 @@ temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=0, Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
-temp.df4<- data.frame(Draws=F.trans[,1], Cat="Hacked", State="Non-breeder")
-temp.df5<- data.frame(Draws=F.trans[,2], Cat="Sex", State="Non-breeder")
+temp.df4<- data.frame(Draws=A.trans[,1], Cat="Hacked", State="Non-breeder")
+temp.df5<- data.frame(Draws=A.trans[,2], Cat="Sex", State="Non-breeder")
 df.trans<- rbind(temp.df4, temp.df5)
 df.trans$combined<- factor(paste(df.trans$State, df.trans$Cat))
 df.trans$combined <- factor(df.trans$combined, levels=levels(df.trans$combined)[c(3,4,5,6,1,2)])
@@ -111,7 +111,7 @@ temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=B.recap[,1], Cat="Effort", State="Breeder")
 temp.df5<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
 temp.df6<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
-temp.df7<- data.frame(Draws=F.recap[,2], Cat="Effort", State="Non-breeder")
+temp.df7<- data.frame(Draws=A.recap[,2], Cat="Effort", State="Non-breeder")
 df.recap<- rbind(temp.df4, temp.df7)
 df.recap$combined<- factor(paste(df.recap$State, df.recap$Cat))
 df.recap$combined <- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #"Juvenile Hacked", "Juvenile Sex", 
@@ -224,7 +224,7 @@ dev.off()
 df4<- df3<- df2 <- df1 <- data.frame(param=NA , md=NA, lhdi85=NA, uhdi85=NA, lhdi95=NA, uhdi95=NA)
 # params with 1 estimate
 for (i in 1:3){
-ind <- c(20,21,24)[i]
+ind <- c(27,28,31)[i]
 df1[i,1] <- names(out$sims.list)[ind]
 df1[i,2] <- median(out$sims.list[[ind]] )
 df1[i,3:4] <- HDIofMCMC(out$sims.list[[ind]], credMass=0.85)
@@ -347,7 +347,7 @@ dev.off()
 library (ggplot2)
 library (gridExtra)
 library (ggmcmc)
-source(".\\HDIofMCMC.R")
+source(".\\R\\HDIofMCMC.R")
 logit <- function(p=p){
   log(p/(1-p))
 }
@@ -364,8 +364,9 @@ data_summary2 <- function(x) {
   return(list(y=m,ymin=ymin,ymax=ymax))
 }
 
-dat<- data_summary(out$sims.list$eta.JSalpha[,1,]) 
-pdf(file=".\\figs\\Survival_overTime.pdf", width=3.14, height=2.3)
+dat<- data_summary(out$sims.list$eta.OSalpha[,1,]) 
+tiff(file=".\\figs\\Survival_overTime.tiff", 
+     width=3.14, height=2.3, units="in", res=300)
 par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
 # Survival Juv female
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), tcl=-0.2, cex.axis=0.5,
@@ -373,13 +374,13 @@ plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
 axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
      cex.axis=0.5, padj=-4)
-dat<- data_summary(out$sims.list$eta.JSalpha[,1,]) 
+dat<- data_summary(out$sims.list$eta.OSalpha[,1,]) 
 polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1994:2018, dat$y)
 title ("First-year female", cex.main=0.5, line=-0.5)
 
 # Survival Juv male
-dat<- data_summary(out$sims.list$eta.JSalpha[,2,]) 
+dat<- data_summary(out$sims.list$eta.OSalpha[,2,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -390,7 +391,7 @@ lines( 1994:2018, dat$y)
 title ("First-year male", cex.main=0.5, line=-0.5)
 
 # Survival Floater
-dat<- data_summary(out$sims.list$eta.FSalpha[,]) 
+dat<- data_summary(out$sims.list$eta.ASalpha[,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -416,10 +417,11 @@ dev.off()
 ###########
 # Transitions 1
 ###########
-pdf(file=".\\figs\\Transition_1_overTime.pdf", width=3.14, height=2.3)
+tiff(file=".\\figs\\Recruit_1_overTime.tiff", 
+     width=3.14, height=2.3, units="in", res=300)
 par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
 # Transition Juvenile female 
-dat<- data_summary(out$sims.list$eta.JBRalpha[,1,]) 
+dat<- data_summary(out$sims.list$eta.OBRalpha[,1,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -430,7 +432,7 @@ lines( 1994:2018, dat$y)
 title ("First-year female to breeder", cex.main=0.5, line=-0.5)
 
 # Transition Juvenile male
-dat<- data_summary(out$sims.list$eta.JBRalpha[,2,]) 
+dat<- data_summary(out$sims.list$eta.OBRalpha[,2,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -441,7 +443,7 @@ lines( 1994:2018, dat$y)
 title ("First-year male to breeder", cex.main=0.5, line=-0.5)
 
 # Transition breeder to nonbreeder
-dat<- data_summary(out$sims.list$eta.BFRalpha[,]) 
+dat<- data_summary(out$sims.list$eta.BARalpha[,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -456,10 +458,11 @@ dev.off()
 ##############
 # Transitions 2
 ################
-pdf(file=".\\figs\\Transition_2_overTime.pdf", width=3.14, height=2.3)
+tiff(file=".\\figs\\Recruit_2_overTime.tiff", 
+     width=3.14, height=2.3, units="in", res=300)
 par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
 # Transition Nonbreeder female wild
-dat<- data_summary(out$sims.list$eta.FBRalpha[,1,1,]) 
+dat<- data_summary(out$sims.list$eta.ABRalpha[,1,1,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -470,7 +473,7 @@ lines( 1994:2018, dat$y)
 title ("Nonbreeder female wild to breeder", cex.main=0.5, line=-0.5)
 
 # Transition Nonbreeder male wild
-dat<- data_summary(out$sims.list$eta.FBRalpha[,2,1,]) 
+dat<- data_summary(out$sims.list$eta.ABRalpha[,2,1,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -481,7 +484,7 @@ lines( 1994:2018, dat$y)
 title ("Nonbreeder male wild to breeder", cex.main=0.5, line=-0.5)
 
 # Transition Nonbreeder female hacked
-dat<- data_summary(out$sims.list$eta.FBRalpha[,1,2,]) 
+dat<- data_summary(out$sims.list$eta.ABRalpha[,1,2,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -492,7 +495,7 @@ lines( 1994:2018, dat$y)
 title ("Nonbreeder female hacked to breeder", cex.main=0.5, line=-0.5)
 
 # Transition Nonbreeder male hacked
-dat<- data_summary(out$sims.list$eta.FBRalpha[,2,2,]) 
+dat<- data_summary(out$sims.list$eta.ABRalpha[,2,2,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -628,7 +631,7 @@ dev.off()
 ####################
 ## ---- ipm population growth rates -------
 # Code adapted from Kery and Schaub 2012
-load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
+load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
 source(".\\HDIofMCMC.R")
 load(".\\data\\counts.Rdata")
 aug<- df.F$male_hacked
@@ -1033,12 +1036,12 @@ mean(datl$prod, na.rm=T)
 sd(datl$prod, na.rm=T)
 
 ## ---- immigration ---------
-load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\ipm-jags-imm.Rdata")
+load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
 source("R/HDIofMCMC.R")
 options(scipen = 100)
 x <- seq(from=0, to=4, by=0.01)
 df <- data.frame(x=x, prior=dnorm(x,0,1))
-df2 <- data.frame(omega=out$sims.list$omega1)
+df2 <- data.frame(omega=out$sims.list$omega)
 
 par(mar=c(5,5,2,5))
 plot(df$x, df$prior, type="l", lwd=2, xlim=c(0,4),
@@ -1052,14 +1055,15 @@ plot(density(df2$omega), type="l", lwd=2, xlim=c(0,4),
 axis(side = 4, at = c(0,30,60))      # Add second axis
 mtext("Posterior density (blue line)", side = 4, line = 3)  
 
+# model estimated number of immigrants and imm rate
 mnI <- apply(out$sims.list$NI[,3:26], 1, mean)
 median(mnI)
 HDIofMCMC(mnI)
-median(out$sims.list$omega1)
-HDIofMCMC(out$sims.list$omega1)
+median(out$sims.list$omega)
+HDIofMCMC(out$sims.list$omega)
 
-hist(out$sims.list$omega1, main="Histogram of Immigration", xlab="Posterior draws of immigration")
-abline(v=median(out$sims.list$omega1), lwd=2)
-abline(v=HDIofMCMC(out$sims.list$omega1, cred=0.95), lty=2, lwd=2)
-median(out$sims.list$omega1)
-HDIofMCMC(out$sims.list$omega1, cred=0.95)
+hist(out$sims.list$omega, main="Histogram of Immigration", xlab="Posterior draws of immigration")
+abline(v=median(out$sims.list$omega), lwd=2)
+abline(v=HDIofMCMC(out$sims.list$omega, cred=0.95), lty=2, lwd=2)
+median(out$sims.list$omega)
+HDIofMCMC(out$sims.list$omega, cred=0.95)

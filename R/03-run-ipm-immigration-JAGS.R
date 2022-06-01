@@ -4,6 +4,8 @@
 ################################
 library (jagsUI)
 load(".\\data\\data-7states.Rdata")
+datl$pp <- c(0, 0, tapply(datl$prod, datl$year.p, sum, na.rm=T), 42)
+datl$pp[c(15,17)] <- NA
 m<- c("ipm-jags-imm")
 modfl <- paste(".\\", m, ".txt", sep="")
 sink(modfl)
@@ -65,11 +67,10 @@ cat("
     sigma.BM ~ dnorm(0, 1/(2*2) )T(0,)
     sigma.AM ~ dnorm(0, 1/(2*2) )T(0,)
     sigma.OM ~ dnorm(0, 1/(2*2) )T(0,)
-    sigma.prod ~ dunif(0,10)
-    omega1 ~ dnorm(0, 1/(1*1) )T(0,) # upper limit 5 imm per breeder to help run model
+    omega ~ dnorm(0, 1/(1*1) )T(0,) # upper limit 5 imm per breeder to help run model
     
     for (m in 1:2){ mu.F[m] ~ dunif(0,5) } # m # limits to help run model
-    sigma.F ~ dunif(0,10)
+    sigma.F ~ dnorm(0, 1/(2*2) )T(0,)
     
     # Survival loops for demographic categories by sex, hacked, effort 
     
@@ -158,17 +159,23 @@ cat("
     ###############################
     # Likelihood for productivity
     ###############################
-    for (k in 1:K){ prod[k] ~ dpois( prod.mu[year.p[k] , ter[k]] ) }
-    for (j in 1:n.ter){
-    for (t in 3:(n.yr-1)){ 
-    log(prod.mu[t,j]) <- log(F[t]) + eps.prod[j] # link productivity to fecundity
-    } # t
-    eps.prod[j] ~ dnorm(0, 1/(sigma.prod*sigma.prod))  
-    } # j
-    
+    for (t in 2:(n.yr-1)){ 
+      pp[t] ~ dpois( F[t]*NB[t] )
+      log(F[t]) <- log(mu.F[manage[t]]) + eps.F[t]
+      eps.F[t] ~ dnorm (0, 1/(sigma.F*sigma.F) )
+    }
+    # GOF fecundity
     for (t in 1:(n.yr-1)){ 
-    log(F[t+1]) <- log(mu.F[manage[t+1]]) + eps.F[t+1]
-    eps.F[t+1] ~ dnorm (0, 1/(sigma.F*sigma.F) )
+      J.rep[t] ~ dpois( F[t]*NB[t] )
+      J.exp[t] <- F[t]*NB[t]
+      d.obs[t] <- pp[t]* log((pp[t]+0.001)/(J.exp[t]+0.001)) - (pp[t]-J.exp[t])
+      d.rep[t] <- J.rep[t]*log((J.rep[t]+0.001)/(J.exp[t]+0.001)) - (J.rep[t]-J.exp[t])
+    } # t
+    dd.obs <- sum(d.obs)
+    tvm.obs <- sd(pp)^2/mean(pp)
+    dd.rep <- sum(d.rep)
+    tvm.rep <- sd(J.rep)^2/mean(J.rep)
+
     ################################
     # Likelihood for immigration
     ###############################
@@ -179,6 +186,7 @@ cat("
     ################################
     # Likelihood for counts
     ################################
+    for (t in 1:(n.yr-1)){
     # Number of wild born juvs
     N[1,t+1] ~ dpois( (NO[t]*eta.OSalpha[2,t]*eta.OBRalpha[2,t] + # first year males to breeders
     NF[t]*eta.ASalpha[t]*eta.ABRalpha[2,2,t] + # nonbreeder male hacked adults to breeder
@@ -202,9 +210,9 @@ cat("
     # Nonbreeder hacked adults to breeders
     N[9,t+1] ~ dbin(eta.ASalpha[t]*eta.ABRalpha[2,2,t], NF[t] )
     # Immigrants to breeders
-    N[10,t+1] ~ dpois(NB[t]*omega1)
+    N[10,t+1] ~ dpois(NB[t]*omega)
     # Immigrants to nonbreeders
-    N[11,t+1] ~ dpois(NF[t]*omega1)
+    N[11,t+1] ~ dpois(NF[t]*omega)
     } # t
     
     for (t in 1:n.yr){
@@ -217,11 +225,78 @@ cat("
     
     # Observation process    
     for (t in 2:n.yr){
-    l.countBM[t] ~ dnorm(log(NB[t]), 1/(sigma.BM*sigma.BM)) # breeding males
-    l.countFM[t] ~ dnorm(log(NF[t]), 1/(sigma.AM*sigma.AM)) # nonbreeding adult males
-    l.countJM[t] ~ dnorm(log(NO[t]), 1/(sigma.OM*sigma.OM)) # first year males
+    countBM[t] ~ dpois(NB[t]) # breeding males
+    countFM[t] ~ dpois(NF[t]) # nonbreeding adult males
+    countJM[t] ~ dpois(NO[t]) # first year males
     } # t
     
+    ###################
+    # Assess fit of the state-space models for counts
+    # Step 1: Compute statistic for observed data
+    # Step 2: Use discrepancy measure: mean absolute error
+    # Step 3: Use test statistic: number of turns
+    ###################
+    for (t in 1:n.yr){ 
+    c.expB[t] <- NB[t] + 0.001 # expected counts adult breeder
+    c.expA[t] <- NF[t] + 0.001 # nonbreeder
+    c.expO[t] <- NO[t] + 0.001 # first year
+    c.obsB[t] <- countBM[t] + 0.001
+    c.obsA[t] <- countFM[t] + 0.001
+    c.obsO[t] <- countJM[t] + 0.001
+    dssm.obsB[t] <- abs( ( (c.obsB[t]) - (c.expB[t]) ) / (c.obsB[t]+0.001)  )
+    dssm.obsA[t] <- abs( ( (c.obsA[t]) - (c.expA[t]) ) / (c.obsA[t]+0.001)  )
+    dssm.obsO[t] <- abs( ( (c.obsO[t]) - (c.expO[t]) ) / (c.obsO[t]+0.001)  )
+    } # t
+    dmape.obs[1] <- sum(dssm.obsB[2:n.yr])
+    dmape.obs[2] <- sum(dssm.obsA[2:n.yr])
+    dmape.obs[3] <- sum(dssm.obsO[2:n.yr])
+    # Compute fit statistic for replicate data
+    # Mean absolute error
+    for (t in 1:n.yr){ 
+    c.repB[t] ~ dpois(NB[t] ) # expected counts
+    c.repA[t] ~ dpois(NF[t] ) 
+    c.repO[t] ~ dpois(NO[t] ) 
+    } # t
+    for (t in 1:n.yr){ 
+    dssm.repB[t] <- abs( ( (c.repB[t]) - (c.expB[t]) ) / (c.repB[t]+0.001) )
+    dssm.repA[t] <- abs( ( (c.repA[t]) - (c.expA[t]) ) / (c.repA[t]+0.001) )
+    dssm.repO[t] <- abs( ( (c.repO[t]) - (c.expO[t]) ) / (c.repO[t]+0.001) )
+    } # t
+    dmape.rep[1] <- sum(dssm.repB[2:n.yr])
+    dmape.rep[2] <- sum(dssm.repA[2:n.yr])
+    dmape.rep[3] <- sum(dssm.repO[2:n.yr])
+    
+    # Test statistic for number of turns
+    for (t in 1:(n.yr-2)){
+    tt1.obsB[t] <- step(countBM[t+2] - countBM[t+1])
+    tt2.obsB[t] <- step(countBM[t+1] - countBM[t])
+    tt3.obsB[t] <- equals(tt1.obsB[t] + tt2.obsB[t], 1)
+    tt1.obsA[t] <- step(countFM[t+2] - countFM[t+1])
+    tt2.obsA[t] <- step(countFM[t+1] - countFM[t])
+    tt3.obsA[t] <- equals(tt1.obsA[t] + tt2.obsA[t], 1)
+    tt1.obsO[t] <- step(countJM[t+2] - countJM[t+1])
+    tt2.obsO[t] <- step(countJM[t+1] - countJM[t])
+    tt3.obsO[t] <- equals(tt1.obsO[t] + tt2.obsO[t], 1)
+    } # t
+    tturn.obs[1] <- sum(tt3.obsB)
+    tturn.obs[2] <- sum(tt3.obsA)
+    tturn.obs[3] <- sum(tt3.obsO)
+    
+    for (t in 1:(n.yr-2)){
+    tt1.repB[t] <- step(c.repB[t+2] - c.repB[t+1])
+    tt2.repB[t] <- step(c.repB[t+1] - c.repB[t])
+    tt3.repB[t] <- equals(tt1.repB[t] + tt2.repB[t], 1)
+    tt1.repA[t] <- step(c.repA[t+2] - c.repA[t+1])
+    tt2.repA[t] <- step(c.repA[t+1] - c.repA[t])
+    tt3.repA[t] <- equals(tt1.repA[t] + tt2.repA[t], 1)
+    tt1.repO[t] <- step(c.repO[t+2] - c.repO[t+1])
+    tt2.repO[t] <- step(c.repO[t+1] - c.repO[t])
+    tt3.repO[t] <- equals(tt1.repO[t] + tt2.repO[t], 1)
+    } # t
+    tturn.rep[1] <- sum(tt3.repB)
+    tturn.rep[2] <- sum(tt3.repA)
+    tturn.rep[3] <- sum(tt3.repO)
+
     ################################
     # Likelihood for survival
     ################################
@@ -333,9 +408,10 @@ ms.init.z <- function(ch, f){
 inits <- function(){list(z = ms.init.z(datl$y, f) )}
 
 params <- c(
-  "N", "NB", "NF", "NO", "NI", "Ntot", "sigma.BM", "sigma.AM", "sigma.OM",
-  "F", "sigma.prod", "sigma.F", "eps.prod", "eps.F", "mu.F",
-  "omega1", "omegaA", "omegaB", "omegaA1", "omegaB1", "sigma.omegaA", "sigma.omegaB", "eps.omegaA", "eps.omegaB",
+  "N", "NB", "NF", "NO", "NI", "Ntot", 
+  "F",  "sigma.F", "eps.F", "mu.F",   "omega",
+  "dmape.obs", "dmape.rep", "tvm.obs", "tvm.rep", "dd.obs", "dd.rep",
+  "tturn.obs", "tturn.rep",
   "OSalpha", "ASalpha", "BSalpha", "OBRalpha", "ABRalpha", "BARalpha",  "mu.pA", "mu.pB",
   "OSalpha1", "ASalpha1", "BSalpha1","OBRalpha1", "ABRalpha1", "BARalpha1","mu.pA1", "mu.pB1",
   "eps.OS.s", "eps.AS.s", "eps.BS.s", "eps.OBR.psi", "eps.ABR.psi", "eps.BAR.psi", "eps.pA", "eps.pB", 

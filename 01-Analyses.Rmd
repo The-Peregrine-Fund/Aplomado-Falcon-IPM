@@ -40,7 +40,7 @@ Data and scripts used in analyses can be found at https://github.com/The-Peregri
 
 Preliminary analyses had two primary components: (1) an evaluation of the probabilities of survival, recruitment, and resight in response to explanatory variables (i.e. hacked, sex, and effort) for each life stage; and (2) an evaluation of emigration and immigration probabilities. For the evaluation of survival, recruitment, and resight response to explanatory variables (1), and emigration (part of 2), we used a state-space formulation of a Cormack-Jolly-Seber survival model (hereafter CJS, Gimenez et al. 2007, Royle 2008) with capture-mark-resight-dead recovery data (Kéry and Schaub 2012).
 
-We implemented a preliminary CJS model using the global model that included all discrete explanatory variables considered here as fixed effects for survival, recruitment, and resight probabilities. The explanatory variable ‘sex’ indexed the mean intercept of survival, recruitment, and resight probabilities as either female or male; ‘hacked status’ indexed the mean intercept of survival, recruitment, and resight probabilities as either wild or hacked; and ‘survey effort’ indexed the mean intercept of resight probabilities in a given year as low or high effort. Additionally, we included these explanatory variables as indices of the standard errors (σ) associated with the random factor for each year, allowing groups (e.g. male and female) to have different standard errors over time. 
+We implemented a preliminary CJS model using the global model that included all discrete explanatory variables considered here as fixed effects for survival, recruitment, and resight probabilities. The explanatory variable ‘sex’ indexed the mean intercept of survival, recruitment, and resight probabilities as either female or male; ‘hacked status’ indexed the mean intercept of survival, recruitment, and resight probabilities as either wild or hacked; and ‘survey effort’ indexed the mean intercept of resight probabilities in a given year as low or high effort. Additionally, we included these explanatory variables as indices of the standard errors ($σ$) associated with the random factor for each year, allowing groups (e.g. male and female) to have different standard errors over time. 
 
 We used the preliminary CJS model that included all explanatory variables to estimate whether parameters were important by calculating the difference between pairs of groups (e.g. male and female, Kruschke 2011, McClure et al. 2017b) using their posterior distributions and retained important covariates when 95% highest density intervals (HDIs) of these differences did not intersect zero. We retained important explanatory variables within a CJS survival model for use in subsequent IPMs (Appendix S1: Table S1 and Fig. S1).
 
@@ -50,7 +50,7 @@ A previous study observed that including immigration rates in IPMs when populati
 
 We sought to estimate emigration from an integrated population model by using mark-resight-dead recovery data (p. 241, Kéry and Schaub 2012). We could not implement this IPM because of software limitations; therefore, we implemented the CJS model alone with the previously described assessment of covariates. This CJS model included five observation states and seven true states that allowed for the estimation of emigration and true survival (see S1 Section 1 for details). We excluded emigration rate in IPMs if it was negligible (i.e. median emigration probability ≤ 0.01, Appendix S1: Fig. S2). 
 
-We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants (N^I, denoted with superscript I) and an immigration rate (ω, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. Preliminary analyses are fully described in supplemental materials (Appendix S1).
+We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants ($N^I$, denoted with superscript I) and an immigration rate ($ω$, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. Preliminary analyses are fully described in supplemental materials (Appendix S1).
 
 ## 1.3 Formulation of Multi-state Cormack-Jolly-Seber (CJS) Model with Emigration
 
@@ -93,7 +93,7 @@ $$ \Omega=
 \begin{bmatrix} 
 0 & \phi^0(1-\psi^{0B})(1-\delta)  & \phi^0\psi^{0B}(1-\delta) & (1-\phi^0)r(1-\delta) & (1-\phi^0)(1-r)(1-\delta) & \phi^0\delta & (1-\phi^0)(1-r)\delta\\ 
 0 & \phi^{AB}(1-\psi^{AB})(1-\delta)  & \phi^A\psi^{AB}(1-\delta) & (1-\phi^A)r(1-\delta) & (1-\phi^A)(1-r)(1-\delta) & \phi^A\delta & (1-\phi^A)(1-r)\delta\\ 
-0 & \phi^B(1-\psi^{BA})(1-\delta)  & \phi^B\psi^{BA}(1-\delta) & (1-\phi^B)r(1-\delta) & (1-\phi^B)(1-r)(1-\delta) & \phi^B\delta & (1-\phi^B)(1-r)\delta\\ 
+0 & \phi^B\psi^{BA}(1-\delta)  & \phi^B(1-\psi^{BA})(1-\delta) & (1-\phi^B)r(1-\delta) & (1-\phi^B)(1-r)(1-\delta) & \phi^B\delta & (1-\phi^B)(1-r)\delta\\ 
 0 & 0 & 0 & 0 & 1 & 0 & 0\\
 0 & 0 & 0 & 0 & 1 & 0 & 0\\
 0 & 0 & 0 & 0 & 0 & 1 & 0\\
@@ -167,7 +167,7 @@ data_summary2 <- function(x,...) {
 We load the results from the global CJS model to assess which covariates had important effects on parameters.
 
 ```{r ppsurvival, eval=TRUE}
-load("C:\\Users\\rolek.brian\\Documents\\Projects\\APLO IPM\\outputs\\surv7-jags-global.Rdata")
+load(".\\outputs\\surv7-em-global.Rdata")
 
 O.surv <- O.rec <- A.surv <- A.rec <- B.surv <- B.rec <- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
 A.resight <- B.resight <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],3))
@@ -298,9 +298,17 @@ ests <- data.frame(round(rbind(
   do.call(rbind, tapply(df.rec$Draws, df.rec$combined, data_summary)),
   do.call(rbind, tapply(df.resight$Draws, df.resight$combined, data_summary))
 ),3))
-colnames(ests) <- c("median", "LHDI_95", "UHDI_95")
-ests$param <- c(rep("survival", 6), rep("recruitment", 6), rep("resight", 6) )
-ests$important <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |                   (ests$LHDI_95 <= 0 & ests$UHDI_95<=0),                          "yes", "no") 
+ests2 <- data.frame(round(rbind(
+  do.call(rbind, tapply(df.surv$Draws, df.surv$combined, data_summary2)),
+  do.call(rbind, tapply(df.rec$Draws, df.rec$combined, data_summary2)),
+  do.call(rbind, tapply(df.resight$Draws, df.resight$combined, data_summary2))
+),3))
+ests <- cbind(ests, ests2[, c(2,3)])
+colnames(ests) <- c("median", "LHDI_95", "UHDI_95", "LHDI_85", "UHDI_85")
+ests <- cbind(c(rep("survival", 6), rep("recruitment", 6), rep("resight", 6) ), ests)
+colnames(ests)[1] <- "param"
+ests$imp95 <- ifelse((ests$LHDI_95 >= 0 & ests$UHDI_95>=0) |                   (ests$LHDI_95 <= 0 & ests$UHDI_95<=0),                          "yes", "no") 
+ests$imp85 <- ifelse((ests$LHDI_85 >= 0 & ests$UHDI_85>=0) |                   (ests$LHDI_85 <= 0 & ests$UHDI_85<=0),                          "yes", "no")
 ```
 
 #### 1.4.2.3 The Importance of Covariates in the CJS Model with Global Constraints
@@ -409,11 +417,11 @@ knitr::read_chunk('R/04-run-ipm-no-immigration-JAGS.R')
 ```
 ## 2.2 Postprocess Model Output  
 ```{r ppipm, eval=FALSE}
-load(".\\outputs\\ipm-jags-no-imm.Rdata") # load model output
+load(".\\outputs\\ipm-jags-noimm-GOF-pois.Rdata") # load model output
 library (jagsUI)
 library (ggplot2)
 library (gridExtra)
-source("HDIofMCMC.R") # Function to compute highest density interval. From Kruschke 2011.
+source("R\\HDIofMCMC.R") # Function to compute highest density interval. From Kruschke 2011.
 data_summary85 <- function(x) {
   m <- median(x)
   ymin <- HDIofMCMC(x, credMass=0.85)[[1]]
@@ -631,3 +639,5 @@ Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hi
 Krushke, J. K. 2011. Doing Bayesian Data Analysis: A Tutorial with R and BUGS. Elsevier Inc., Burlington, Massachusetts, USA.
 
 Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.
+
+Schaub, M., and D. Fletcher. 2015. Estimating immigration using a Bayesian integrated population model: choice of parametrization and priors. Environmental and Ecological Statistics 22:535–549.
