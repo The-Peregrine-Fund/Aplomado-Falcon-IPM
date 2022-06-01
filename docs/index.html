@@ -199,13 +199,10 @@ summary {
 <li><a href="#jags-and-r-code-for-implementing-the-cjs-model-with-global-constraints">1.4.1 JAGS and R Code for Implementing the CJS Model with Global Constraints</a></li>
 <li><a href="#postprocess-global-model">1.4.2 Postprocess Global Model</a></li>
 </ul></li>
-<li><a href="#implementation-of-the-multi-state-cjs-model-with-reduced-covariates">1.5 Implementation of the Multi-state CJS Model with Reduced Covariates</a><ul>
-<li><a href="#jags-and-r-code-for-the-cjs-model-with-reduced-covariates">1.5.1 JAGS and R Code for the CJS Model with Reduced Covariates</a></li>
-</ul></li>
-<li><a href="#implementation-of-the-integrated-population-model-with-immigration">1.6 Implementation of the Integrated Population Model with Immigration</a><ul>
-<li><a href="#formulation-of-the-ipm-with-immigration">1.6.1 Formulation of the IPM with Immigration</a></li>
-<li><a href="#jags-and-r-code-for-the-ipm-with-immigration">1.6.2 JAGS and R Code for the IPM with Immigration</a></li>
-<li><a href="#the-importance-of-immigration">1.6.3 The Importance of Immigration</a></li>
+<li><a href="#implementation-of-the-integrated-population-model-with-immigration">1.5 Implementation of the Integrated Population Model with Immigration</a><ul>
+<li><a href="#formulation-of-the-ipm-with-immigration">1.5.1 Formulation of the IPM with Immigration</a></li>
+<li><a href="#jags-and-r-code-for-the-ipm-with-immigration">1.5.2 JAGS and R Code for the IPM with Immigration</a></li>
+<li><a href="#the-importance-of-immigration">1.5.3 The Importance of Immigration</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#implementation-of-the-integrated-population-model-without-immigration-for-evaluation-of-vital-rates">2. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates</a><ul>
@@ -228,18 +225,19 @@ summary {
 <h1>1 Preliminary Analyses</h1>
 <div id="overview-selecting-covariates-for-survival-recruitment-and-resight-probabilities" class="section level2">
 <h2>1.1 Overview: Selecting Covariates for Survival, Recruitment, and Resight Probabilities</h2>
-<p>Preliminary analyses had two primary components: (1) an evaluation of the probabilities of survival, recruitment, and resight in response to explanatory variables (i.e. hacked, sex, and effort) for each life stage; and (2) an evaluation of emigration and immigration probabilities. For the evaluation of survival, recruitment, and resight response to explanatory variables (1), and emigration (part of 2), we used a state-space formulation of a Cormack-Jolly-Seber survival model (hereafter CJS, Gimenez et al. 2007, Royle 2008) with capture-mark-resight-dead recovery data (Kéry and Schaub 2012).</p>
+<p>Preliminary analyses had two primary components: (1) an evaluation of the probabilities of survival, recruitment, and resight in response to explanatory variables (i.e. hacked, sex, and effort) for each life stage; and (2) an evaluation of emigration and immigration probabilities. For the evaluation of survival, recruitment, and resight response to explanatory variables (1) we used a state-space formulation of a Cormack-Jolly-Seber survival model (hereafter CJS, Gimenez et al. 2007, Royle 2008) with capture-mark-resight-dead recovery data (Kéry and Schaub 2012).</p>
 <p>We implemented a preliminary CJS model using the global model that included all discrete explanatory variables considered here as fixed effects for survival, recruitment, and resight probabilities. The explanatory variable ‘sex’ indexed the mean intercept of survival, recruitment, and resight probabilities as either female or male; ‘hacked status’ indexed the mean intercept of survival, recruitment, and resight probabilities as either wild or hacked; and ‘survey effort’ indexed the mean intercept of resight probabilities in a given year as low or high effort. Additionally, we included these explanatory variables as indices of the standard errors (<span class="math inline">\(σ\)</span>) associated with the random factor for each year, allowing groups (e.g. male and female) to have different standard errors over time.</p>
 <p>We used the preliminary CJS model that included all explanatory variables to estimate whether parameters were important by calculating the difference between pairs of groups (e.g. male and female, Kruschke 2011, McClure et al. 2017b) using their posterior distributions and retained important covariates when 95% highest density intervals (HDIs) of these differences did not intersect zero. We retained important explanatory variables within a CJS survival model for use in subsequent IPMs (Appendix S1: Table S1 and Fig. S1).</p>
 </div>
 <div id="overview-immigration-and-emigration-rates" class="section level2">
 <h2>1.2 Overview: Immigration and Emigration Rates</h2>
-<p>A previous study observed that including immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015), because immigration rates were constrained to positive values. We believed similar biases could arise when emigration was low and included in IPMs because emigration rate was also constrained to positive values. Therefore, we explicitly tested whether immigration and emigration were contributing to this population to determine whether to include these parameters in final analyses.</p>
 <p>We sought to estimate emigration from an integrated population model by using mark-resight-dead recovery data (p. 241, Kéry and Schaub 2012). We could not implement this IPM because of software limitations; therefore, we implemented the CJS model alone with the previously described assessment of covariates. This CJS model included five observation states and seven true states that allowed for the estimation of emigration and true survival (see S1 Section 1 for details). We excluded emigration rate in IPMs if it was negligible (i.e. median emigration probability ≤ 0.01, Appendix S1: Fig. S2).</p>
-<p>We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants (<span class="math inline">\(N^I\)</span>, denoted with superscript I) and an immigration rate (<span class="math inline">\(ω\)</span>, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. Preliminary analyses are fully described in supplemental materials (Appendix S1).</p>
+<p>We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants (<span class="math inline">\(N^I\)</span>, denoted with superscript I) and an immigration rate (<span class="math inline">\(ω\)</span>, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ.</p>
+<p>Previous studies observed that including latent immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015; Paquet et al. 2021), because immigration rates were constrained to positive values. Therefore, we explicitly tested whether immigration may be contributing to this population to determine whether to include it in final analyses.</p>
 </div>
 <div id="formulation-of-multi-state-cormack-jolly-seber-cjs-model-with-emigration" class="section level2">
 <h2>1.3 Formulation of Multi-state Cormack-Jolly-Seber (CJS) Model with Emigration</h2>
+<p>The formulation of the CJS model with emigration is incuded in the Methods section of the manuscript. We review the basic structure here.</p>
 <div id="observation-matrix" class="section level3">
 <h3>1.3.1 Observation Matrix</h3>
 <p>We specified the observation matrix (<span class="math inline">\(PO\)</span>) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.<br />
@@ -287,7 +285,7 @@ Observed states (1--5, columns left to right):<br />
 <div id="cjs-model-with-global-constraints-includes-all-group-covariates" class="section level3">
 <h3>1.3.3 CJS Model with Global Constraints (Includes All Group Covariates)</h3>
 <p>We implemented the global CJS model in Just Another Gibbs Sampler (JAGS). The &quot;global survival model&quot; includes all covariates considered here. Probabilities of survival (<span class="math inline">\(\phi\)</span>), recruitment (<span class="math inline">\(\psi\)</span>), and resight (<span class="math inline">\(p\)</span>) are contrained to vary by sex (<span class="math inline">\(s\)</span>, male or female), hacked (<span class="math inline">\(h\)</span>, wild-born or captive bred). Each life stage (first-year, non-breeder, breeder) and group (sex, hacked, effort) has a unique variance parameter over time. We used the same constraints for first-year, non-breeder, and breeder birds. Superscripts with greek symbols are used to label parameters. <span class="math display">\[logit(\phi_{i,t})=\mu_{s,h}^{\phi} + \epsilon_{s,h,t}^{\phi}\]</span> <span class="math display">\[\epsilon_{s,h,t}^{\phi}=normal(0,\tau=1/\sigma_{s,h}^{\phi,2})\]</span> <span class="math display">\[logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}\]</span></p>
-<p><span class="math display">\[\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})\]</span> Furthermore, probability of resight varied by survey effort (<span class="math inline">\(e\)</span>) for non-breeders and breeders. <span class="math display">\[logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}\]</span> <span class="math display">\[\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})\]</span> Probabilities of emigration (<span class="math inline">\(\delta\)</span>) and dead recovery (<span class="math inline">\(r\)</span>) are contrained to constant values over time to aid with convergence and for computational efficiency. <span class="math display">\[logit(\delta_{i,t})=\mu^{\delta}\]</span> Including emigration within this model allowed us to estimate <em>true</em> survival rather than <em>apparent</em> survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models.</p>
+<p><span class="math display">\[\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})\]</span> Furthermore, probability of resight varied by survey effort (<span class="math inline">\(e\)</span>) for non-breeders and breeders. <span class="math display">\[logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,t}^{p}\]</span> <span class="math display">\[\epsilon_{s,h,t}^{p}=normal(0,\tau=1/\sigma_{s,h}^{p,2})\]</span> Probabilities of emigration (<span class="math inline">\(\delta\)</span>) and dead recovery (<span class="math inline">\(r\)</span>) are contrained to an overall mean <span class="math inline">\(\mu\)</span>. <span class="math display">\[logit(\delta_{i,t})=\mu^{\delta}\]</span> Including emigration within this model allowed us to estimate <em>true</em> survival rather than <em>apparent</em> survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models.</p>
 </div>
 </div>
 <div id="implementation-of-the-multi-state-cjs-model-with-global-constraints" class="section level2">
@@ -1041,309 +1039,40 @@ Fig. S2. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line)
 <pre><code>## [1] 0.0008555531</code></pre>
 <pre class="r"><code>HDIofMCMC(out$sims.list$em, cred=0.95)</code></pre>
 <pre><code>## [1] 8.894633e-07 2.669040e-03</code></pre>
+<pre class="r"><code># plot prior of dunif(0,1) and posterior density of emigration
+x &lt;- seq(-0.5, 1.5, length=1000)
+y &lt;- dunif(x, min = 0, max = 1)
+par(mar=c(5,5,2,5))
+plot(x, y, type=&quot;l&quot;, lwd=2, xlim=c(0,1.1),
+     ylab=&quot;Prior density (black line)\n Uniform(0,1)&quot;, 
+     xlab=expression(paste(&quot;Emigration rate (&quot;,delta,&quot;)&quot;, sep=&quot;&quot;)),
+     main=&quot;&quot;)
+par(new=TRUE)
+plot(density(out$sims.list$em), type=&quot;l&quot;, lwd=2, xlim=c(0,1.1),
+     main=&quot;&quot;, col=&quot;blue&quot;,
+     axes = FALSE, xlab = &quot;&quot;, ylab = &quot;&quot;)
+axis(side = 4, at = c(0,350,700))      # Add second axis
+mtext(&quot;Posterior density (blue line)&quot;, side = 4, line = 3)  </code></pre>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Fig. S3. Prior and posterior densities of emigration." width="576" />
+<p class="caption">
+Fig. S3. Prior and posterior densities of emigration.
+</p>
 </div>
 </div>
-</div>
-<div id="implementation-of-the-multi-state-cjs-model-with-reduced-covariates" class="section level2">
-<h2>1.5 Implementation of the Multi-state CJS Model with Reduced Covariates</h2>
-<div id="jags-and-r-code-for-the-cjs-model-with-reduced-covariates" class="section level3">
-<h3>1.5.1 JAGS and R Code for the CJS Model with Reduced Covariates</h3>
-<p>We reduced the number of covariates using probability of direction calculations from the global model by eliminating covariates and parameters that were not important (e.g., emigration).</p>
-<pre class="r"><code># JAGS must be installed on your computer
-library (jagsUI)
-load(&quot;./data/data-7states.Rdata&quot;)
-m&lt;- c(&quot;surv7-jags-reduced&quot;)
-modfl &lt;- paste(&quot;./&quot;, m, &quot;.txt&quot;, sep=&quot;&quot;)
-sink(modfl)
-cat(&quot;
-    model{
-    ####################################################
-    ####################################################
-    # Mark-resight-recovery data
-    #   Observations (po) = y  
-    #     1 seen first year (age 0)
-    #     2 seen nonbreeder
-    #     3 seen breeder
-    #     4 recovered dead
-    #     5 not seen
-    #   States (ps)
-    #     1 alive first year
-    #     2 alive nonbreeder
-    #     3 alive breeder
-    #     4 dead
-    #     5 dead not recovered
-    #     6 emigrated alive
-    #     7 emigrated dead
-    #   Groups
-    #     1 wild born
-    #     2 hacked
-    #   Sex
-    #     1 female
-    #     2 male
-    #   Effort
-    #     1 low
-    #     2 high
-    ###################################################
-    # PARAMETERS
-    #   sO: survival probability first year 
-    #       (sO as in the letter O rather than zero so jags can parse)
-    #   sA: survival probability nonbreeders
-    #   sB: survival probability breeders
-    #   psiOB: recruitment probability from first-year to breeder
-    #   psiAB: recruitment probability from nonbreeders to breeder
-    #   psiBA: recruitment probability from breeder to nonbreeders 
-    #   pO: resight probability first-year
-    #   pA: resight probability nonbreeders
-    #   pB: resight probability breeder
-    #   em: probability of emigration
-    #   r: probability of dead recovery
-    ###################################################
-    # Priors and constraints
-    ###################################################
-    l.mu.em &lt;- logit(mu.em)
-    mu.em ~ dunif(0,1)
-
-    sigma.AS.s ~ dnorm(0, 1/(2*2) )T(0,)
-    ASalpha &lt;- logit(ASalpha1)
-    ASalpha1 ~ dunif(0, 1)
-    
-    sigma.BS.s ~ dnorm(0, 1/(2*2) )T(0,)
-    BSalpha &lt;- logit(BSalpha1) 
-    BSalpha1 ~ dunif(0, 1)
-    
-    sigma.BAR.psi ~ dnorm(0, 1/(2*2) )T(0,)
-    BARalpha &lt;- logit(BARalpha1)
-    BARalpha1 ~ dunif(0, 1)
-    r ~ dunif(0, 1)
-    sigma.pB ~ dnorm(0, 1/(2*2) )T(0,)
-    sigma.pA ~ dnorm(0, 1/(2*2) )T(0,)
-    
-    for (k in 1:2){
-    mu.pB[k]&lt;- logit(mu.pB1[k])
-    mu.pB1[k] ~ dunif(0, 1)
-    mu.pA[k] &lt;- logit(mu.pA1[k])
-    mu.pA1[k] ~ dunif(0, 1)
-    } # k
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.ASalpha[t]) &lt;- ASalpha + eps.AS.s[t]
-    eps.AS.s[t] ~ dnorm(0, 1/(sigma.AS.s*sigma.AS.s))
-    logit(eta.BSalpha[t]) &lt;- BSalpha + eps.BS.s[t]
-    eps.BS.s[t] ~ dnorm(0, 1/(sigma.BS.s*sigma.BS.s))    
-    logit(eta.BARalpha[t]) &lt;- BARalpha + eps.BAR.psi[t]
-    eps.BAR.psi[t] ~ dnorm(0, 1/(sigma.BAR.psi*sigma.BAR.psi))
-    logit(eta.pB[t]) &lt;- mu.pB[effort[t]] + eps.pB[t]
-    eps.pB[t] ~ dnorm(0, 1/(sigma.pB*sigma.pB))
-    } #t
-    
-    for(s in 1:2){
-    sigma.OS.s[s] ~ dnorm(0, 1/(2*2) )T(0,)
-    OSalpha[s] &lt;- logit(OSalpha1[s]) 
-    OSalpha1[s] ~ dunif(0, 1)
-    sigma.OBR.psi[s] ~ dnorm(0, 1/(2*2) )T(0,)
-    OBRalpha[s] &lt;- logit(OBRalpha1[s]) 
-    OBRalpha1[s] ~ dunif(0, 1)
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.OSalpha[s,t]) &lt;- OSalpha[s] + eps.OS.s[s,t]
-    eps.OS.s[s,t] ~ dnorm(0, 1/(sigma.OS.s[s]*sigma.OS.s[s]))
-    logit(eta.OBRalpha[s,t]) &lt;- OBRalpha[s] + eps.OBR.psi[s,t]
-    eps.OBR.psi[s,t] ~ dnorm(0, 1/(sigma.OBR.psi[s]*sigma.OBR.psi[s]))
-    } #t
-    
-    for (h in 1:2){
-    sigma.ABR.psi[s,h] ~ dnorm(0, 1/(2*2) )T(0,)
-    ABRalpha[s,h] &lt;- logit(ABRalpha1[s,h])
-    ABRalpha1[s,h] ~ dunif(0, 1)
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.ABRalpha[s,h,t]) &lt;- ABRalpha[s,h] + eps.ABR.psi[s,h,t]
-    eps.ABR.psi[s,h,t] ~ dnorm(0, 1/(sigma.ABR.psi[s,h]*sigma.ABR.psi[s,h]))
-    } } }   #t #h #s
-    
-    for (t in 1:(n.yr-1)){
-    logit(eta.pA[t]) &lt;- mu.pA[effort[t]] + eps.pA[t]
-    eps.pA[t] ~ dnorm(0, 1/(sigma.pA*sigma.pA)) 
-    logit(em[t]) &lt;-  l.mu.em # eps.em[t]    
-} #t 
-    
-    ################################
-    # Likelihood for survival
-    ################################
-    for (i in 1:nind){
-    for (t in 1:(n.yr-1)){
-    #Survival
-    sO[i,t] &lt;- eta.OSalpha[sex[i],t] # first year
-    sA[i,t] &lt;- eta.ASalpha[t] # nonbreeder
-    sB[i,t] &lt;- eta.BSalpha[t] # breeder
-    #Recruitment
-    psiOB[i,t] &lt;- eta.OBRalpha[sex[i],t] # first year to breeder
-    psiAB[i,t] &lt;- eta.ABRalpha[sex[i], hacked[i],t] # nonbreeder to breeder
-    psiBA[i,t] &lt;- eta.BARalpha[t] # breeder to nonbreeder
-    #Re-encounter
-    pA[i,t] &lt;- eta.pA[t] # resight of nonbreeders
-    pB[i,t] &lt;- eta.pB[t]  # resight of breeders
-    }#t
-    }#i
-    
-    # Define state-transition and observation matrices
-    for (i in 1:nind){  
-    # Define probabilities of state S(t+1) given S(t)
-    for (t in first[i]:(n.yr-1)){
-    ps[1,i,t,1] &lt;- 0
-    ps[1,i,t,2] &lt;- sO[i,t] * (1-psiOB[i,t]) * (1-em[t])
-    ps[1,i,t,3] &lt;- sO[i,t] * psiOB[i,t] * (1-em[t])
-    ps[1,i,t,4] &lt;- (1-sO[i,t]) * r * (1-em[t])
-    ps[1,i,t,5] &lt;- (1-sO[i,t]) * (1-r) * (1-em[t])
-    ps[1,i,t,6] &lt;- sO[i,t] * em[t]
-    ps[1,i,t,7] &lt;- (1-sO[i,t]) * (1-r) * em[t]
-    
-    ps[2,i,t,1] &lt;- 0
-    ps[2,i,t,2] &lt;- sA[i,t] * (1-psiAB[i,t]) * (1-em[t])
-    ps[2,i,t,3] &lt;- sA[i,t] * psiAB[i,t] * (1-em[t])
-    ps[2,i,t,4] &lt;- (1-sA[i,t]) * r * (1-em[t])
-    ps[2,i,t,5] &lt;- (1-sA[i,t]) * (1-r) * (1-em[t])
-    ps[2,i,t,6] &lt;- sA[i,t] * em[t]
-    ps[2,i,t,7] &lt;- (1-sA[i,t]) * (1-r) * em[t]
-    
-    ps[3,i,t,1] &lt;- 0
-    ps[3,i,t,2] &lt;- sB[i,t] * psiBA[i,t] * (1-em[t])
-    ps[3,i,t,3] &lt;- sB[i,t] * (1-psiBA[i,t]) * (1-em[t])
-    ps[3,i,t,4] &lt;- (1-sB[i,t]) * r * (1-em[t])
-    ps[3,i,t,5] &lt;- (1-sB[i,t]) * (1-r) * (1-em[t])
-    ps[3,i,t,6] &lt;- sB[i,t] * em[t]
-    ps[3,i,t,7] &lt;- (1-sB[i,t]) * (1-r) * em[t]
-    
-    ps[4,i,t,1] &lt;- 0
-    ps[4,i,t,2] &lt;- 0
-    ps[4,i,t,3] &lt;- 0
-    ps[4,i,t,4] &lt;- 0
-    ps[4,i,t,5] &lt;- 1
-    ps[4,i,t,6] &lt;- 0
-    ps[4,i,t,7] &lt;- 0
-    
-    ps[5,i,t,1] &lt;- 0
-    ps[5,i,t,2] &lt;- 0
-    ps[5,i,t,3] &lt;- 0
-    ps[5,i,t,4] &lt;- 0
-    ps[5,i,t,5] &lt;- 1
-    ps[5,i,t,6] &lt;- 0
-    ps[5,i,t,7] &lt;- 0
-    
-    ps[6,i,t,1] &lt;- 0
-    ps[6,i,t,2] &lt;- 0
-    ps[6,i,t,3] &lt;- 0
-    ps[6,i,t,4] &lt;- 0
-    ps[6,i,t,5] &lt;- 0
-    ps[6,i,t,6] &lt;- 1
-    ps[6,i,t,7] &lt;- 0
-    
-    ps[7,i,t,1] &lt;- 0
-    ps[7,i,t,2] &lt;- 0
-    ps[7,i,t,3] &lt;- 0
-    ps[7,i,t,4] &lt;- 0
-    ps[7,i,t,5] &lt;- 0
-    ps[7,i,t,6] &lt;- 0
-    ps[7,i,t,7] &lt;- 1
-    
-    # Define probabilities of O(t) given S(t)
-    po[1,i,t,1] &lt;- 1 
-    po[1,i,t,2] &lt;- 0
-    po[1,i,t,3] &lt;- 0
-    po[1,i,t,4] &lt;- 0
-    po[1,i,t,5] &lt;- 0
-    
-    po[2,i,t,1] &lt;- 0
-    po[2,i,t,2] &lt;- pA[i,t]
-    po[2,i,t,3] &lt;- 0
-    po[2,i,t,4] &lt;- 0
-    po[2,i,t,5] &lt;- 1-pA[i,t]
-    
-    po[3,i,t,1] &lt;- 0
-    po[3,i,t,2] &lt;- 0
-    po[3,i,t,3] &lt;- pB[i,t]
-    po[3,i,t,4] &lt;- 0
-    po[3,i,t,5] &lt;- 1-pB[i,t]
-    
-    po[4,i,t,1] &lt;- 0
-    po[4,i,t,2] &lt;- 0
-    po[4,i,t,3] &lt;- 0
-    po[4,i,t,4] &lt;- 1
-    po[4,i,t,5] &lt;- 0
-    
-    po[5,i,t,1] &lt;- 0
-    po[5,i,t,2] &lt;- 0
-    po[5,i,t,3] &lt;- 0
-    po[5,i,t,4] &lt;- 0
-    po[5,i,t,5] &lt;- 1
-    
-    po[6,i,t,1] &lt;- 0
-    po[6,i,t,2] &lt;- 0
-    po[6,i,t,3] &lt;- 0
-    po[6,i,t,4] &lt;- 0
-    po[6,i,t,5] &lt;- 1
-    
-    po[7,i,t,1] &lt;- 0
-    po[7,i,t,2] &lt;- 0
-    po[7,i,t,3] &lt;- 0
-    po[7,i,t,4] &lt;- 0
-    po[7,i,t,5] &lt;- 1
-    } #t
-    } #i
-    
-    # Likelihood 
-    for (i in 1:nind){
-    # Define latent state at first capture
-    z[i,first[i]] &lt;- y[i,first[i]]
-    for (t in (first[i]+1):n.yr){
-    # State process: draw S(t) given S(t-1)
-    z[i,t] ~ dcat(ps[z[i,t-1], i, t-1, 1:7])
-    # Observation process: draw O(t) given S(t)
-    y[i,t] ~ dcat(po[z[i,t], i, t-1, 1:5])
-    } #t
-    } #i
-    } #model
-    &quot;,fill = TRUE)
-sink()  
-
-# Initial values
-get.first &lt;- function(x) min(which(x!=5))
-f &lt;- apply(datl$y, 1, get.first)
-get.last &lt;- function(x) max(which(x!=5))
-l &lt;- apply(datl$y, 1, get.last)
-TFmat &lt;- is.na(z.inits) &amp; is.na(datl$z)
-for (i in 1:dim(TFmat)[1]){  TFmat[i,1:f[i]] &lt;- FALSE }
-z.inits[TFmat] &lt;- sample(size=445, c(2,3), replace=T, prob=c(0.5, 0.5) ) 
-
-inits &lt;- function(){list(z = z.inits)} 
-
-params &lt;- c(
-  &quot;r&quot;, &quot;l.mu.em&quot;, &quot;mu.em&quot;, &quot;em&quot;,
-  &quot;OSalpha&quot;, &quot;ASalpha&quot;, &quot;BSalpha&quot;, &quot;OBRalpha&quot;, &quot;ABRalpha&quot;, &quot;BARalpha&quot;,  &quot;mu.pA&quot;, &quot;mu.pB&quot;,
-  &quot;OSalpha1&quot;, &quot;ASalpha1&quot;, &quot;BSalpha1&quot;,&quot;OBRalpha1&quot;, &quot;ABRalpha1&quot;, &quot;BARalpha1&quot;,&quot;mu.pA1&quot;, &quot;mu.pB1&quot;,
-  &quot;eps.OS.s&quot;, &quot;eps.AS.s&quot;, &quot;eps.BS.s&quot;, &quot;eps.OBR.psi&quot;, &quot;eps.ABR.psi&quot;, &quot;eps.BAR.psi&quot;, &quot;eps.pA&quot;, &quot;eps.pB&quot;, 
-  &quot;eta.OSalpha&quot;, &quot;eta.ASalpha&quot;, &quot;eta.BSalpha&quot;, &quot;eta.OBRalpha&quot;, &quot;eta.ABRalpha&quot;, &quot;eta.BARalpha&quot;, &quot;eta.pA&quot;,  &quot;eta.pB&quot;, 
-  &quot;sigma.OS.s&quot;, &quot;sigma.AS.s&quot;, &quot;sigma.BS.s&quot;, &quot;sigma.OBR.psi&quot;, &quot;sigma.ABR.psi&quot;, &quot;sigma.BAR.psi&quot;, &quot;sigma.pA&quot;, &quot;sigma.pB&quot;  
-)
-
-# MCMC settings
-ni &lt;- 200000; nt &lt;- 100; nb &lt;- 100000; nc &lt;- 3; na &lt;- 10000 # actual run # takes about 1 week on a high performance computer
-out &lt;- jags(datl, inits, params, modfl,  
-            n.chains = nc, n.thin = nt, n.burnin = nb, n.adapt=na, n.iter=ni, 
-            parallel=T, module=c(&quot;glm&quot;, &quot;bugs&quot;))
-#save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&quot;out&quot;)</code></pre>
 </div>
 </div>
 <div id="implementation-of-the-integrated-population-model-with-immigration" class="section level2">
-<h2>1.6 Implementation of the Integrated Population Model with Immigration</h2>
-<p>We specify the IPM including observation and state transition matices for the CJS survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.</p>
+<h2>1.5 Implementation of the Integrated Population Model with Immigration</h2>
+<p>We specify the IPM including observation and state-transition matrices for the CJS survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.</p>
 <div id="formulation-of-the-ipm-with-immigration" class="section level3">
-<h3>1.6.1 Formulation of the IPM with Immigration</h3>
-<p>This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate (<span class="math inline">\(\omega\)</span>) for non-breeders and breeders combined. The number of immigrants (<span class="math inline">\(N_{t+1}^{I}\)</span>) was specified as</p>
-<p><span class="math display">\[N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega)\]</span> We assigned the following prior to immigration rate: <span class="math display">\[ \omega \sim {\sf half normal}(mean=0,sd=1)\]</span> We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey.</p>
+<h3>1.5.1 Formulation of the IPM with Immigration</h3>
+<p>This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate (<span class="math inline">\(\omega\)</span>) for non-breeders and breeders separately. The number of immigrant breeders (<span class="math inline">\(N_{t+1}^{IB}\)</span>) was specified as</p>
+<p><span class="math display">\[N_{t+1}^{IB} \sim {\sf Poisson}(N_{t}^{B}\omega_{t}^{B})\]</span></p>
+<p>We assigned the following prior to immigration rates: <span class="math display">\[ \omega_{t}^{B}= \mu^{IB}+\epsilon_{t}\]</span> <span class="math display">\[\mu^{IB}\sim {\sf half normal}(mean=0,sd=1)\]</span> <span class="math display">\[ \epsilon_{t}\sim normal(0, \sigma^{IB})\]</span> A similar parameterization was used for non-breeder immigration. We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey.</p>
 </div>
 <div id="jags-and-r-code-for-the-ipm-with-immigration" class="section level3">
-<h3>1.6.2 JAGS and R Code for the IPM with Immigration</h3>
+<h3>1.5.2 JAGS and R Code for the IPM with Immigration</h3>
 <pre class="r"><code>#################################
 # The model
 ################################
@@ -1774,14 +1503,14 @@ out &lt;- jags(datl, inits, params, modfl,
 #save(file=paste(&quot;./&quot;, m, &quot;.Rdata&quot;, sep=&quot;&quot;), list=&quot;out&quot;)</code></pre>
 </div>
 <div id="the-importance-of-immigration" class="section level3">
-<h3>1.6.3 The Importance of Immigration</h3>
+<h3>1.5.3 The Importance of Immigration</h3>
 <div class="figure">
-<img src="data:image/png;base64,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" alt="Fig. S3. A comparison of prior and posterior densities of immigration rate." />
-<p class="caption">Fig. S3. A comparison of prior and posterior densities of immigration rate.</p>
+<img src="data:image/png;base64,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" alt="Fig. S4. A comparison of prior and posterior densities of immigration rate." />
+<p class="caption">Fig. S4. A comparison of prior and posterior densities of immigration rate.</p>
 </div>
 <div class="figure">
-<img src="data:image/png;base64,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" alt="Fig. S4. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed)." />
-<p class="caption">Fig. S4. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).</p>
+<img src="data:image/png;base64,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" alt="Fig. S5. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed)." />
+<p class="caption">Fig. S5. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).</p>
 </div>
 </div>
 </div>

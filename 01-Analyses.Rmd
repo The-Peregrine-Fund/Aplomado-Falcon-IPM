@@ -38,7 +38,7 @@ Data and scripts used in analyses can be found at https://github.com/The-Peregri
 
 ## 1.1 Overview: Selecting Covariates for Survival, Recruitment, and Resight Probabilities 
 
-Preliminary analyses had two primary components: (1) an evaluation of the probabilities of survival, recruitment, and resight in response to explanatory variables (i.e. hacked, sex, and effort) for each life stage; and (2) an evaluation of emigration and immigration probabilities. For the evaluation of survival, recruitment, and resight response to explanatory variables (1), and emigration (part of 2), we used a state-space formulation of a Cormack-Jolly-Seber survival model (hereafter CJS, Gimenez et al. 2007, Royle 2008) with capture-mark-resight-dead recovery data (Kéry and Schaub 2012).
+Preliminary analyses had two primary components: (1) an evaluation of the probabilities of survival, recruitment, and resight in response to explanatory variables (i.e. hacked, sex, and effort) for each life stage; and (2) an evaluation of emigration and immigration probabilities. For the evaluation of survival, recruitment, and resight response to explanatory variables (1) we used a state-space formulation of a Cormack-Jolly-Seber survival model (hereafter CJS, Gimenez et al. 2007, Royle 2008) with capture-mark-resight-dead recovery data (Kéry and Schaub 2012).
 
 We implemented a preliminary CJS model using the global model that included all discrete explanatory variables considered here as fixed effects for survival, recruitment, and resight probabilities. The explanatory variable ‘sex’ indexed the mean intercept of survival, recruitment, and resight probabilities as either female or male; ‘hacked status’ indexed the mean intercept of survival, recruitment, and resight probabilities as either wild or hacked; and ‘survey effort’ indexed the mean intercept of resight probabilities in a given year as low or high effort. Additionally, we included these explanatory variables as indices of the standard errors ($σ$) associated with the random factor for each year, allowing groups (e.g. male and female) to have different standard errors over time. 
 
@@ -46,13 +46,14 @@ We used the preliminary CJS model that included all explanatory variables to est
 
 ## 1.2 Overview: Immigration and Emigration Rates 
 
-A previous study observed that including immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015), because immigration rates were constrained to positive values. We believed similar biases could arise when emigration was low and included in IPMs because emigration rate was also constrained to positive values. Therefore, we explicitly tested whether immigration and emigration were contributing to this population to determine whether to include these parameters in final analyses. 
-
 We sought to estimate emigration from an integrated population model by using mark-resight-dead recovery data (p. 241, Kéry and Schaub 2012). We could not implement this IPM because of software limitations; therefore, we implemented the CJS model alone with the previously described assessment of covariates. This CJS model included five observation states and seven true states that allowed for the estimation of emigration and true survival (see S1 Section 1 for details). We excluded emigration rate in IPMs if it was negligible (i.e. median emigration probability ≤ 0.01, Appendix S1: Fig. S2). 
 
-We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants ($N^I$, denoted with superscript I) and an immigration rate ($ω$, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. Preliminary analyses are fully described in supplemental materials (Appendix S1).
+We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants ($N^I$, denoted with superscript I) and an immigration rate ($ω$, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. 
+
+Previous studies observed that including latent immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015; Paquet et al. 2021), because immigration rates were constrained to positive values. Therefore, we explicitly tested whether immigration may be contributing to this population to determine whether to include it in final analyses.
 
 ## 1.3 Formulation of Multi-state Cormack-Jolly-Seber (CJS) Model with Emigration
+The formulation of the CJS model with emigration is incuded in the Methods section of the manuscript. We review the basic structure here.
 
 ### 1.3.1 Observation Matrix  
 We specified the observation matrix ($PO$) that relates observed states (columns) to real states (rows) of Northern Aplomado Falcons.  
@@ -109,9 +110,9 @@ $$logit(\psi_{i,t})=\mu_{s,h}^{\psi} + \epsilon_{s,h,t}^{\psi}$$
 
 $$\epsilon_{s,h,t}^{\psi}=normal(0,\tau=1/\sigma_{s,h}^{\psi,2})$$ 
 Furthermore, probability of resight varied by survey effort ($e$) for non-breeders and breeders. 
-$$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,e,t}^{p}$$
-$$\epsilon_{s,h,e,t}^{p}=normal(0,\tau=1/\sigma_{s,h,e}^{p,2})$$ 
-Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to constant values over time to aid with convergence and for computational efficiency. 
+$$logit(p_{i,t})=\mu_{s,h,e}^{p} + \epsilon_{s,h,t}^{p}$$
+$$\epsilon_{s,h,t}^{p}=normal(0,\tau=1/\sigma_{s,h}^{p,2})$$ 
+Probabilities of emigration ($\delta$) and dead recovery ($r$) are contrained to an overall mean $\mu$. 
 $$logit(\delta_{i,t})=\mu^{\delta}$$
 Including emigration within this model allowed us to estimate _true_ survival rather than _apparent_ survival, because apparent survival is confounded with emigration (1-site fidelity) in some CJS models. 
 
@@ -361,36 +362,47 @@ grid.arrange(ps + theme(legend.position=c(0.5,0.95), legend.direction="horizonta
 
 ```
 #### 1.4.2.4 The Importance of Emigration  
-```{r emigration, fig.width=6, fig.height=4, fig.cap= "Fig. S2. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
+```{r emigration1, fig.width=6, fig.height=4, fig.cap= "Fig. S2. Histogram of emigration. Median (solid line) and 95% HDIs (dashed line) are depicted."}
 hist(out$sims.list$em, main="Histogram of Emigration", xlab="Posterior draws of emigration")
 abline(v=median(out$sims.list$em), lwd=2)
 abline(v=HDIofMCMC(out$sims.list$em, cred=0.95), lty=2, lwd=2)
 median(out$sims.list$em)
 HDIofMCMC(out$sims.list$em, cred=0.95)
-
-```
-## 1.5 Implementation of the Multi-state CJS Model with Reduced Covariates  
-
-### 1.5.1 JAGS and R Code for the CJS Model with Reduced Covariates
-We reduced the number of covariates using probability of direction calculations from the global model by eliminating covariates and parameters that were not important (e.g., emigration). 
-```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('R/02-run-survival-reduced-JAGS.R')
-```
-```{r, reduced, eval=FALSE}
 ```
 
-## 1.6 Implementation of the Integrated Population Model with Immigration  
-We specify the IPM including observation and state transition matices for the CJS survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
+```{r emigration2, fig.width=6, fig.height=4, fig.cap= "Fig. S3. Prior and posterior densities of emigration."}
+# plot prior of dunif(0,1) and posterior density of emigration
+x <- seq(-0.5, 1.5, length=1000)
+y <- dunif(x, min = 0, max = 1)
+par(mar=c(5,5,2,5))
+plot(x, y, type="l", lwd=2, xlim=c(0,1.1),
+     ylab="Prior density (black line)\n Uniform(0,1)", 
+     xlab=expression(paste("Emigration rate (",delta,")", sep="")),
+     main="")
+par(new=TRUE)
+plot(density(out$sims.list$em), type="l", lwd=2, xlim=c(0,1.1),
+     main="", col="blue",
+     axes = FALSE, xlab = "", ylab = "")
+axis(side = 4, at = c(0,350,700))      # Add second axis
+mtext("Posterior density (blue line)", side = 4, line = 3)  
 
-### 1.6.1 Formulation of the IPM with Immigration
-This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders combined. The number of immigrants ($N_{t+1}^{I}$) was specified as  
+```
 
-$$N_{t+1}^{I} \sim {\sf Poisson}(N_{t}\omega)$$
-We assigned the following prior to immigration rate:
-$$ \omega \sim {\sf half normal}(mean=0,sd=1)$$
-We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey. 
+## 1.5 Implementation of the Integrated Population Model with Immigration  
+We specify the IPM including observation and state-transition matrices for the CJS survival submodel provided within the manuscript. These matrices are identical for IPMs with and without immigration.  
 
-### 1.6.2 JAGS and R Code for the IPM with Immigration  
+### 1.5.1 Formulation of the IPM with Immigration
+This IPM specifies immigration as a rate (Abadi et al. 2010). We estimate this immigration rate ($\omega$) for non-breeders and breeders separately. The number of immigrant breeders ($N_{t+1}^{IB}$) was specified as  
+
+$$N_{t+1}^{IB} \sim {\sf Poisson}(N_{t}^{B}\omega_{t}^{B})$$
+
+We assigned the following prior to immigration rates:
+$$ \omega_{t}^{B}= \mu^{IB}+\epsilon_{t}$$ 
+$$\mu^{IB}\sim {\sf half normal}(mean=0,sd=1)$$
+$$ \epsilon_{t}\sim normal(0, \sigma^{IB})$$
+A similar parameterization was used for non-breeder immigration. We did not include immigration of first-year birds because they must be recruited as breeders or non-breeders during the following post-breeding survey. 
+
+### 1.5.2 JAGS and R Code for the IPM with Immigration  
 
 ```{r, include=FALSE, cache=FALSE}
 knitr::read_chunk('R/03-run-ipm-immigration-JAGS.R')
@@ -398,15 +410,15 @@ knitr::read_chunk('R/03-run-ipm-immigration-JAGS.R')
 ```{r,ipm1, eval=FALSE}
 ```
 
-### 1.6.3 The Importance of Immigration
+### 1.5.3 The Importance of Immigration
 
 
-![Fig. S3. A comparison of prior and posterior densities of immigration rate.](figs/Immigration_post_prior.png)
+![Fig. S4. A comparison of prior and posterior densities of immigration rate.](figs/Immigration_post_prior.png)
 
 
 
 
-![Fig. S4. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).](figs/Immigration hist.png)
+![Fig. S5. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).](figs/Immigration hist.png)
 
 # 2. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates
 ## 2.1 JAGS and R Code for the IPM without Immigration 

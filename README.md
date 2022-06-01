@@ -17,9 +17,11 @@ Metadata associated with the file "data\data-7states.Rdata". Once loaded into R,
 +	countBM = counts of adult breeder males each year.
 +	countFM = counts of adult nonbreeder males each year.
 +	countJM = counts of first-year males each year.
++	countOM = counts of wild-hatched first-year males each year.
 +	aug = the number of first-year captive-bred birds translocated for each year. 
 +	manage = an index for each year inidcating whether improvements to nest boxes or habitat had occurred. 1 = pre-management <2012, 2= post-management >=2012 
-+	prod = productivity for each spatial territory and breeding pair. Referred to as "J" in manuscript. 
++	prod = productivity for each spatial territory and breeding pair. 
++	pp = total productivity for each year. Referred to as "J" in manuscript.
 +	year.p = an index of years for prod.
 +	ter = an index of spatial territories for prod.
 +	K = the number of observed nests. 
