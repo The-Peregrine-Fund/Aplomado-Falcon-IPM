@@ -10,6 +10,10 @@ mod <- "immigration P"
 load("outputs\\ipm-jags-imm-GOF-pois-zip.Rdata")
 mod <- "immigration ZIP"
 
+load("C:\\Users\\rolek.brian\\Documents\\GitHub\\Aplomado-Falcon-IPM\\outputs\\ipm-e.Rdata")
+load("C:\\Users\\rolek.brian\\Documents\\GitHub\\Aplomado-Falcon-IPM\\outputs\\ipm-ie.Rdata")
+
+
 par(mfrow=c(2,3), oma=c(0,0,5,0))
 plot(out$sims.list$dd.obs, out$sims.list$dd.rep,
      main="Poisson regression model\nfor Productivity",

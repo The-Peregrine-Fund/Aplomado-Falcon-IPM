@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Brian W. Rolek"
-date: "2 May 2022"
+date: "1 June 2022"
 output:
   html_document:
     df_print: paged
@@ -31,7 +31,7 @@ knitr::read_chunk('R/01-run-survival-global-JAGS.R')
 
 Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2022. Long-term Demography of a Reintroduced and Isolated Population of Endangered Falcons. Global Ecology and Conservation.
 
-Data and scripts used in analyses can be found at https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM
+Metadata (see Readme), data, and scripts used in analyses can be found at https://github.com/The-Peregrine-Fund/Aplomado-Falcon-IPM
 
 
 # 1 Preliminary Analyses
@@ -169,6 +169,7 @@ We load the results from the global CJS model to assess which covariates had imp
 
 ```{r ppsurvival, eval=TRUE}
 load(".\\outputs\\surv7-em-global.Rdata")
+
 
 O.surv <- O.rec <- A.surv <- A.rec <- B.surv <- B.rec <- array(NA, dim=c(dim(out$sims.list$OSalpha1)[1],3))
 A.resight <- B.resight <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],3))
@@ -315,12 +316,12 @@ ests$imp85 <- ifelse((ests$LHDI_85 >= 0 & ests$UHDI_85>=0) |                   (
 #### 1.4.2.3 The Importance of Covariates in the CJS Model with Global Constraints
 ```{r survdiffs1, fig.width=10, fig.height=10}
 library (knitr)
-knitr::kable(ests, caption="Table S1. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians and 95% HDIs. Differences were considered important when 95% highest density intervals did not intersect zero.")
+knitr::kable(ests, caption="Table S1. Estimates of differences between groups for survival, recruitment, and resight probabilities. We present medians, 95% HDIs, and 85% HDIs. Differences were considered potentially important when 85% highest density intervals did not intersect zero.")
 
 ```
 
  
-```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig. S1. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival model. Differences were considered important when 95% highest density intervals did not intersect zero."}
+```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig. S1. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival model. Differences were considered potentially important when 85% highest density intervals did not intersect zero."}
 txt <- 30
 lwd <- 1.5
 df.surv$State <- factor(df.surv$State, levels=c("First-year", "Nonbreeder", "Breeder"))
@@ -329,7 +330,7 @@ ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
   geom_violin(aes(fill=State)) + scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) +
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +  
   ylab("Survival\ndifference") + xlab ("") + 
   scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) 
@@ -338,7 +339,7 @@ pt <- ggplot(df.rec, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
   geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) + 
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Recruitment\ndifference") + xlab ("") + 
   scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" ))
@@ -347,7 +348,7 @@ pr <- ggplot(df.resight, aes(x = combined, y = Draws, group=combined)) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
   geom_violin(aes(fill=State)) +  scale_fill_manual(values=c( "#cccccc", "#969696")) +
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
+  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Resight\ndifference") + xlab ("") + 
   scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) 
@@ -581,7 +582,7 @@ grid.arrange(ps + theme(legend.position="none"),
                                    c(3, 3, 3, 3, 3, 3))) 
 ```
 
-![Fig. S5. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis.](figs/SurvivalDiffs_IPM_Reduced.png)
+![Fig. S6. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis.](figs/SurvivalDiffs_IPM_Reduced.png)
 
 # 3. Compare survival estimates from IPMs
 
@@ -649,6 +650,8 @@ Gimenez, O., V. Rossi, R. Choquet, C. Dehais, B. Doris, H. Varella, J.-P. Vila, 
 Kéry, M., and M. Schaub. 2012. Bayesian Population Analysis Using WinBUGS: A hierarchical perspective. First Edit. Elselvier Inc., Oxford, UK.
 
 Krushke, J. K. 2011. Doing Bayesian Data Analysis: A Tutorial with R and BUGS. Elsevier Inc., Burlington, Massachusetts, USA.
+
+Paquet, M., J. Knape, D. Arlt, P. Forslund, T. Pärt, Ø. Flagstad, C. G. Jones, M. A. C. Nicoll, K. Norris, J. M. Pemberton, H. Sand, L. Svensson, V. Tatayah, P. Wabakken, C. Wikenros, M. Åkesson, and M. Low. 2021. Integrated population models poorly estimate the demographic contribution of immigration. Methods in Ecology and Evolution 12:1899–1910.
 
 Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.
 
