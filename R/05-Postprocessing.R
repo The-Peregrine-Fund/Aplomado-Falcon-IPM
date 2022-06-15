@@ -1,5 +1,5 @@
 ## ---- ipm postprocess 1 --------
-load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
+load("outputs\\ipm-e.Rdata")
 # load(".\\ipm-jags-no-imm.Rdata")
 library (jagsUI)
 # plots
@@ -31,7 +31,11 @@ A.recap <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],2))
 #########################
 # Survival
 # female - male
-O.surv[,2]<- out$sims.list$OSalpha1[,1] - out$sims.list$OSalpha1[,2] 
+O.surv[,2]<- (out$sims.list$OSalpha1[,1,1]+out$sims.list$OSalpha1[,1,2])/2 - 
+              (out$sims.list$OSalpha1[,2,1]+out$sims.list$OSalpha1[,2,2])/2 
+# wild -hacked
+O.surv[,3]<- (out$sims.list$OSalpha1[,1,1]+out$sims.list$OSalpha1[,2,1])/2 - 
+  (out$sims.list$OSalpha1[,1,2]+out$sims.list$OSalpha1[,2,2])/2
 # Recruitment
 # female - male
 O.trans[,2]<- out$sims.list$OBRalpha1[,1] - out$sims.list$OBRalpha1[,2]
@@ -58,39 +62,41 @@ A.recap[,2] <- (out$sims.list$mu.pA1[,2,1] + out$sims.list$mu.pA1[,2,2])/2 -
 # high effort - low effort
 B.recap[,1] <- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] 
 
-tab <- data.frame(stage= c("First-year", "First-year", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Breeder"),
-                  param= c("Survival", "Transition", "Transition", "Transition", "Resight", "Resight", "Resight"),
-                  comp= c("Sex", "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
+tab <- data.frame(stage= c("First-year", "First-year", "First-year", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Breeder"),
+                  param= c("Survival", "Survival", "Transition", "Transition", "Transition", "Resight", "Resight", "Resight"),
+                  comp= c("Sex", "Hacked",  "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
                   median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
 tab[1, 4:6]<- round(data_summary2(O.surv[,2]),3)
-tab[2, 4:6]<- round(data_summary2(O.trans[,2]),3)
-tab[3, 4:6]<- round(data_summary2(A.trans[,1]),3)
-tab[4, 4:6]<- round(data_summary2(A.trans[,2]),3)
-tab[5, 4:6]<- round(data_summary2(A.recap[,1]),3)
-tab[6, 4:6]<- round(data_summary2(A.recap[,2]),3)
-tab[7, 4:6]<- round(data_summary2(B.recap[,1]),3)
+tab[2, 4:6]<- round(data_summary2(O.surv[,3]),3)
+tab[3, 4:6]<- round(data_summary2(O.trans[,2]),3)
+tab[4, 4:6]<- round(data_summary2(A.trans[,1]),3)
+tab[5, 4:6]<- round(data_summary2(A.trans[,2]),3)
+tab[6, 4:6]<- round(data_summary2(A.recap[,1]),3)
+tab[7, 4:6]<- round(data_summary2(A.recap[,2]),3)
+tab[8, 4:6]<- round(data_summary2(B.recap[,1]),3)
 tab$important <- ifelse( ((tab$LHDI95 >= 0 & tab$UHDI95>=0) |
                              (tab$LHDI95 <= 0 & tab$UHDI95<=0)) &
                             (tab$LHDI95 != 0 & tab$UHDI95!=0), 
                           "yes", "no") 
 tab$P[1] <- round(sum(O.surv[,2]>0)/length(O.surv[,2]),2)
-tab$P[2] <- round(sum(O.trans[,2]<0)/length(O.trans[,2]),2)
-tab$P[3] <- round(sum(A.trans[,1]>0)/length(A.trans[,1]),2)
-tab$P[4] <- round(sum(A.trans[,2]<0)/length(A.trans[,2]),2)
-tab$P[5] <- round(sum(A.recap[,1]>0)/length(A.recap[,1]),2)
-tab$P[6] <- round(sum(A.recap[,2]>0)/length(A.recap[,2]),2)
-tab$P[7] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
+tab$P[2] <- round(sum(O.surv[,3]>0)/length(O.surv[,3]),2)
+tab$P[3] <- round(sum(O.trans[,2]<0)/length(O.trans[,2]),2)
+tab$P[4] <- round(sum(A.trans[,1]>0)/length(A.trans[,1]),2)
+tab$P[5] <- round(sum(A.trans[,2]<0)/length(A.trans[,2]),2)
+tab$P[6] <- round(sum(A.recap[,1]>0)/length(A.recap[,1]),2)
+tab$P[7] <- round(sum(A.recap[,2]>0)/length(A.recap[,2]),2)
+tab$P[8] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
 print(tab)
 
 ## ---- ipm postprocess 2 --------
 # combine survival data
-temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
+temp.df<- data.frame(Draws=O.surv[,3], Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=O.surv[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
 temp.df5<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
-df.surv<- temp.df1
+df.surv <- rbind(temp.df, temp.df1)
 df.surv$combined<- factor(paste(df.surv$State, df.surv$Cat))
 df.surv$combined <- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
 
@@ -166,56 +172,15 @@ pall <- ggplot(df.all, aes(x = combined, y = Draws)) +
   theme (text = element_text(size=txt)) +  
   ylab("Difference") + xlab ("") +
   scale_x_discrete(breaks=levels(factor(df.all$combined)),
-                   labels=c("Sex", "Hacked", "Sex", "Effort", "Effort" )) + 
+                   labels=c("Hacked","Sex", "Hacked", "Sex", "Effort", "Effort" )) + 
   facet_wrap(~Parameter, scales="free_x") 
   #geom_text(x = 0.5, y = 0.9, aes(label = label), data = f_labels)
 pall 
-png(".//figs//SurvivalDiffs_IPM_Reduced.png", height=500, width=1000)
+tiff(".//figs//SurvivalDiffs_IPM_Reduced.tiff", 
+    height=6, width=12, res=300, units="in")
 pall 
 dev.off()
 
-ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
-  geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) + scale_fill_manual(values=colors) +
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
-  theme_classic() + theme (text = element_text(size=txt)) +
-  ylab("Survival \ndifference") + xlab ("") +
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) +
-  facet_wrap(~State, scales="free")
-
-pt <- ggplot(df.trans, aes(x = combined, y = Draws, group=combined )) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
-  geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values= colors, drop=F) +
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
-  theme_classic() + theme (text = element_text(size=txt)) +
-  ylab("Recruitment \ndifference") + xlab ("") +
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) +
-  facet_wrap(~State, scales="free")
-
-pr <- ggplot(df.recap, aes(x = combined, y = Draws, group=combined)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5, 1),  labels=c(-0.5, 0, 0.5, 1), limits = c(-0.6, 1.0)) +
-  geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=colors[-1]) +
-  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd2) +
-  theme_classic() + theme (text = element_text(size=txt)) +
-  ylab("Resight \ndifference") + xlab ("") +
-  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) +
-  facet_wrap(~State, scales="free")
-
-
-png(".//figs//SurvivalDiffs_IPM_Reduced.png", height=400, width=800)
-grid.arrange(ps + theme(legend.position="none"), 
-             pt + theme(legend.position="none"), 
-             pr + theme(legend.position="none"), 
-             nrow=2,
-             layout_matrix = rbind(c(1, 2, 2, 3, 3),
-                                   c(1, 2, 2, 3, 3))) 
-dev.off()
 
 ## ---- ipm postprocess 3 --------
 ########################
@@ -224,7 +189,7 @@ dev.off()
 df4<- df3<- df2 <- df1 <- data.frame(param=NA , md=NA, lhdi85=NA, uhdi85=NA, lhdi95=NA, uhdi95=NA)
 # params with 1 estimate
 for (i in 1:3){
-ind <- c(27,28,31)[i]
+ind <- c(17,18,21)[i]
 df1[i,1] <- names(out$sims.list)[ind]
 df1[i,2] <- median(out$sims.list[[ind]] )
 df1[i,3:4] <- HDIofMCMC(out$sims.list[[ind]], credMass=0.85)
@@ -232,7 +197,7 @@ df1[i,5:6] <- HDIofMCMC(out$sims.list[[ind]])
 }
 
 # params with 2 estimates
-ind <- 22
+ind <- 19
 df2[1,1] <- paste(names(out$sims.list)[ind], "_1", sep="")
 df2[1,2] <- median(out$sims.list[[ind]][,1] )
 df2[1,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.85)
@@ -241,7 +206,7 @@ df2[2,1] <- paste(names(out$sims.list)[ind], "_2", sep="")
 df2[2,2] <- median(out$sims.list[[ind]][,2] )
 df2[2,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.85)
 df2[2,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.95)
-ind <- 19
+ind <- 23
 df2[3,1] <- paste(names(out$sims.list)[ind], "_1", sep="")
 df2[3,2] <- median(out$sims.list[[ind]][,1] )
 df2[3,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.85)
@@ -250,17 +215,8 @@ df2[4,1] <- paste(names(out$sims.list)[ind], "_2", sep="")
 df2[4,2] <- median(out$sims.list[[ind]][,2] )
 df2[4,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.85)
 df2[4,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.95)
-ind <- 26
-df2[5,1] <- paste(names(out$sims.list)[ind], "_1", sep="")
-df2[5,2] <- median(out$sims.list[[ind]][,1] )
-df2[5,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.85)
-df2[5,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.95)
-df2[6,1] <- paste(names(out$sims.list)[ind], "_2", sep="")
-df2[6,2] <- median(out$sims.list[[ind]][,2] )
-df2[6,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.85)
-df2[6,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.95)
 
-ind <- c(23, 25)[1]
+ind <- 16
 df4[1,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
 df4[1,2] <- median(out$sims.list[[ind]][,1,1] )
 df4[1,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
@@ -277,7 +233,7 @@ df4[4,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
 df4[4,2] <- median(out$sims.list[[ind]][,2,2] )
 df4[4,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
 df4[4,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
-ind <- c(23,25)[2]
+ind <- 20
 df4[5,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
 df4[5,2] <- median(out$sims.list[[ind]][,1,1] )
 df4[5,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
@@ -294,10 +250,30 @@ df4[8,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
 df4[8,2] <- median(out$sims.list[[ind]][,2,2] )
 df4[8,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
 df4[8,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
+ind <- 22
+df4[9,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
+df4[9,2] <- median(out$sims.list[[ind]][,1,1] )
+df4[9,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
+df4[9,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.95)
+df4[10,1] <- paste(names(out$sims.list)[ind], "_2_1", sep="")
+df4[10,2] <- median(out$sims.list[[ind]][,2,1] )
+df4[10,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.85)
+df4[10,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.95)
+df4[11,1] <- paste(names(out$sims.list)[ind], "_1_2", sep="")
+df4[11,2] <- median(out$sims.list[[ind]][,1,2] )
+df4[11,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.85)
+df4[11,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.95)
+df4[12,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
+df4[12,2] <- median(out$sims.list[[ind]][,2,2] )
+df4[12,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
+df4[12,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
+
 
 df<- rbind(df1,df2,df4) 
-df<- df[c(6,7,1,2,4,5,10,11,12,13,3,14,15,16,17,8,9),]
-state <- c("First-year\nfemale", "First-year\nmale", "Nonbreeder", "Breeder", 
+df<- df[c(8,9,10,11,1,2, # survival
+          4,5,12,13,14,15,3, # recruitment
+          16,17,18,19,6,7),] # detection
+state <- c("First-year\nfemale wild", "First-year\nmale wild", "First-year\nfemale hacked", "First-year\nmale hacked", "Nonbreeder", "Breeder", 
   "First-year to\nbreeder\nfemale", "First-year to\nbreeder\nmale", "Nonbreeder\nto breeder\nfemale wild" , "Nonbreeder\nto breeder\nmale wild", "Nonbreeder\nto breeder\nfemale hacked", "Nonbreeder\nto breeder\nmale hacked", "Breeder\nto\nnonbreeder",
   "Nonbreeder\nwild\nlow effort", "Nonbreeder\nwild\nhigh effort", "Nonbreeder\nhacked\nlow effort", "Nonbreeder\nhacked\nhigh effort","Breeder\nlow effort", "Breeder\nhigh effort")
 statenum <- 1:length(state)
@@ -309,31 +285,31 @@ tcl=-0.2
 
 tiff(file=".\\figs\\Survival_estimates.tiff", width=3.25, height=2.3, res=300, unit="in")
 par(mfrow=c(3,1), mar=c(1.4,1,0.3,0.3), oma=c(1,1,0,0)) #bottom, left, top, right
-plot(statenum[1:4], df$md[1:4], ylim=c(0,1), xlim=c(0.5,4.5), 
+plot(statenum[1:6], df$md[1:6], ylim=c(0,1), xlim=c(0.5,6.5), 
      xaxt="n", yaxt="n", xlab="", ylab="Probability",
      cex=pcex)
 title("Survival", line=-1, cex.main=0.8, font.main=1)
-arrows(x0=statenum[1:4], y0=df$lhdi85[1:4], y1=df$uhdi85[1:4], length=0, lwd=lwd)
-arrows(x0=statenum[1:4], y0=df$lhdi95[1:4], y1=df$uhdi95[1:4], length=0, lwd=lwd2)
-axis(1, at=statenum[1:4], labels=state[1:4], cex.axis=0.5, padj=c(-1,-1,-4,-4), tcl=tcl)
+arrows(x0=statenum[1:6], y0=df$lhdi85[1:6], y1=df$uhdi85[1:6], length=0, lwd=lwd)
+arrows(x0=statenum[1:6], y0=df$lhdi95[1:6], y1=df$uhdi95[1:6], length=0, lwd=lwd2)
+axis(1, at=statenum[1:6], labels=state[1:6], cex.axis=0.5, padj=c(-1,-1,-1,-1,-4,-4), tcl=tcl)
 axis(2, at=c(0, 0.5, 1), labels=c(0, 0.5, 1), cex.axis=0.5, tcl=tcl, padj=2.5)
 
-plot(statenum[5:11], df$md[5:11], ylim=c(0,1.3), xlim=c(4.5,11.5), 
+plot(statenum[7:13], df$md[7:13], ylim=c(0,1.3), xlim=c(6.5,13.5), 
      xaxt="n", yaxt="n",xlab="", ylab="Probability",
      cex=pcex)
 title("Recruitment", line=-1, cex.main=0.8, font.main=1)
-arrows(x0=statenum[5:11], y0=df$lhdi85[5:11], y1=df$uhdi85[5:11], length=0, lwd=lwd)
-arrows(x0=statenum[5:11], y0=df$lhdi95[5:11], y1=df$uhdi95[5:11], length=0, lwd=lwd2)
-axis(1, at=statenum[5:11], labels=state[5:11], cex.axis=0.5,  tcl=tcl, padj=-0.2)
+arrows(x0=statenum[7:13], y0=df$lhdi85[7:13], y1=df$uhdi85[7:13], length=0, lwd=lwd)
+arrows(x0=statenum[7:13], y0=df$lhdi95[7:13], y1=df$uhdi95[7:13], length=0, lwd=lwd2)
+axis(1, at=statenum[7:13], labels=state[7:13], cex.axis=0.5,  tcl=tcl, padj=-0.2)
 axis(2, at=c(0, 0.5, 1), labels=c(0, 0.5, 1), cex.axis=0.5, tcl=tcl, padj=2.5)
 
-plot(statenum[12:17], df$md[12:17], ylim=c(0,1), xlim=c(11.5,17.5), 
+plot(statenum[14:19], df$md[14:19], ylim=c(0,1), xlim=c(13.5,19.5), 
      xaxt="n", yaxt="n", xlab="Estimate", ylab="Probability", 
      cex=pcex)
 title("Resight", line=-1, cex.main=0.8, font.main=1)
-arrows(x0=statenum[12:17], y0=df$lhdi85[12:17], y1=df$uhdi85[12:17], length=0, lwd=lwd)
-arrows(x0=statenum[12:17], y0=df$lhdi95[12:17], y1=df$uhdi95[12:17], length=0, lwd=lwd2)
-axis(1, at=statenum[12:17], labels=state[12:17], cex.axis=0.5, tcl=tcl, padj=0)
+arrows(x0=statenum[14:19], y0=df$lhdi85[14:19], y1=df$uhdi85[14:19], length=0, lwd=lwd)
+arrows(x0=statenum[14:19], y0=df$lhdi95[14:19], y1=df$uhdi95[14:19], length=0, lwd=lwd2)
+axis(1, at=statenum[14:19], labels=state[14:19], cex.axis=0.5, tcl=tcl, padj=0)
 axis(2, at=c(0, 0.5, 1), labels=c(0, 0.5, 1), cex.axis=0.5, tcl=tcl, padj=2.5)
 mtext("Probability", side =2, outer=T, cex=0.5)
 dev.off()
@@ -364,54 +340,79 @@ data_summary2 <- function(x) {
   return(list(y=m,ymin=ymin,ymax=ymax))
 }
 
-dat<- data_summary(out$sims.list$eta.OSalpha[,1,]) 
 tiff(file=".\\figs\\Survival_overTime.tiff", 
-     width=3.14, height=2.3, units="in", res=300)
-par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
-# Survival Juv female
+     width=3.14, height=3.1, units="in", res=300)
+par(mfrow=c(3,2), mar=c(1,1,0.3,0.3), oma=c(1,3,0,0))
+ca <- 1
+# Survival first year wild female
+dat<- data_summary(out$sims.list$eta.OSalpha[,1,1,])
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), tcl=-0.2, cex.axis=0.5,
       xaxt="n", yaxt="n")
-axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
-axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
-dat<- data_summary(out$sims.list$eta.OSalpha[,1,]) 
+axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=ca, 
+     padj=0.5, las=1, hadj=0.5)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=ca, padj=-4)
 polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1994:2018, dat$y)
-title ("First-year female", cex.main=0.5, line=-0.5)
+title ("First-year\nwild female", cex.main=1, line=-2)
 
-# Survival Juv male
-dat<- data_summary(out$sims.list$eta.OSalpha[,2,]) 
+# Survival first-year wild male
+dat<- data_summary(out$sims.list$eta.OSalpha[,2,1,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
       xaxt="n", yaxt="n")
-axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
-axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+axis(2, at=c(0,0.5,1), labels=c("","",""), tcl=-0.2, cex.axis=ca, padj=3)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=ca, padj=-4)
 polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1994:2018, dat$y)
-title ("First-year male", cex.main=0.5, line=-0.5)
+title ("First-year\nwild male", cex.main=1, line=-2)
 
-# Survival Floater
+# Survival first-year hacked female
+dat<- data_summary(out$sims.list$eta.OSalpha[,1,2,])
+plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), tcl=-0.2, cex.axis=0.5,
+      xaxt="n", yaxt="n")
+axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=ca, 
+     padj=0.5, las=1, hadj=0.5)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=ca, padj=-4)
+polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
+lines( 1994:2018, dat$y)
+title ("First-year\nhacked female", cex.main=1, line=-2)
+
+# Survival first-year hacked male
+dat<- data_summary(out$sims.list$eta.OSalpha[,2,2,]) 
+plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
+      xaxt="n", yaxt="n")
+axis(2, at=c(0,0.5,1), labels=c("","",""), tcl=-0.2, cex.axis=ca, padj=3)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=ca, padj=-4)
+polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
+lines( 1994:2018, dat$y)
+title ("First-year\nhacked male", cex.main=1, line=-2)
+
+# Survival nonbreeder
 dat<- data_summary(out$sims.list$eta.ASalpha[,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
       xaxt="n", yaxt="n")
-axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
+axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=ca, 
+     padj=0.5, las=1, hadj=0.5)
 axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+     cex.axis=ca, padj=-1)
 polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1994:2018, dat$y)
-title ("Nonbreeder", cex.main=0.5, line=-0.5)
+title ("Nonbreeder", cex.main=1, line=-1)
 
 # Survival Breeder
 dat<- data_summary(out$sims.list$eta.BSalpha[,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1), 
       xaxt="n", yaxt="n")
-axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
+axis(2, at=c(0,0.5,1), labels=c("","",""), tcl=-0.2, cex.axis=ca, padj=3)
 axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+     cex.axis=ca, padj=-1)
 polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1994:2018, dat$y)
-title ("Breeder", cex.main=0.5, line=-0.5)
-mtext("Survival probability", side=2, outer=T, cex=0.5)
+title ("Breeder", cex.main=1, line=-1)
+mtext("Survival probability", side=2, outer=T, cex=1, padj=-1.25)
 dev.off()
 
 ###########
@@ -510,10 +511,11 @@ dev.off()
 ################
 # Resight 
 #################
-pdf(file=".\\figs\\Resight_overTime.pdf", width=3.14, height=2.3)
+tiff(file=".\\figs\\Resight_overTime.tiff", 
+     width=3.14, height=2.3, units="in", res=300)
 par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
 # Recapture nonbreeder wild
-dat<- data_summary(out$sims.list$eta.pF[,1,]) 
+dat<- data_summary(out$sims.list$eta.pA[,1,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -523,8 +525,8 @@ polygon(c(1994:2018, 2018:1994), c(dat$ymax, rev(dat$ymin)), border=NA, col="gra
 lines( 1994:2018, dat$y)
 title ("Nonbreeder wild", cex.main=0.5, line=-0.5)
 
-# Recapture nonbreeder lhacked
-dat<- data_summary(out$sims.list$eta.pF[,2,]) 
+# Recapture nonbreeder hacked
+dat<- data_summary(out$sims.list$eta.pA[,2,]) 
 plot( 1994:2018, dat$y, type="n", ylab="Probability", xlab="Year", ylim=c(0,1),
       xaxt="n", yaxt="n")
 axis(2, at=c(0,0.5,1), labels=c(0,0.5,1), tcl=-0.2, cex.axis=0.5, padj=3)
@@ -550,7 +552,8 @@ dev.off()
 ###################
 # Fecundity 
 ###########################
-pdf(file=".\\figs\\Fecundity_overTime.pdf", width=3.14, height=2.3)
+tiff(file=".\\figs\\Fecundity_overTime.tiff", 
+     width=3.14, height=2.3, res=300, units="in")
 par(mfrow=c(1,1), mar=c(2,1,0.3,0.3), oma=c(0,1,0,0))
 # Fecundity breeder 
 dat<- data_summary2(out$sims.list$F)  
@@ -579,65 +582,73 @@ data_summary2 <- function(x) {
 # Abundance
 ###############
 load(".\\data\\counts.Rdata")
+load(".\\data\\data-7states.Rdata")
+datl$countOM <- datl$countJM-datl$aug
 
-pdf(file=".\\figs\\Abundance_overTime.pdf", width=3.14, height=2.3)
-par(mfrow=c(2,2), mar=c(1,1,0.3,0.3), oma=c(0,1,0,0))
+tiff(file=".\\figs\\Abundance_overTime.tiff", 
+     width=3.14, height=2.3, res=300, units="in")
+par(mfrow=c(2,2), mar=c(0.5,1,0,0), oma=c(0.5,1,0.3,0.3))
 dat<- data_summary2(out$sims.list$Ntot)  
 plot( 1993:2018, dat$y, type="n", ylab="Abundance", xlab="Year", ylim=c(0,max(dat$ymax)),
       xaxt="n", yaxt="n")
-axis(2, at=c(0,125,250), labels=c(0,125,250), tcl=-0.2, cex.axis=0.5, padj=3)
-axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+axis(2, at=c(0,60,120), labels=c(0,60,120), tcl=-0.2, cex.axis=0.75, 
+     padj=2,  las=0)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=0.75, padj=-4)
 polygon(c(1993:2018, 2018:1993), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1993:2018, dat$y)
-lines( 1993:2018, datl$countBM+datl$countFM+datl$countJM , lty=2)
-title ("All males", cex.main=0.5, line=-0.5)
+lines( 1993:2018, datl$countBM+datl$countFM+datl$countOM+datl$aug , lty=2)
+title ("All males", cex.main=0.75, line=-0.5)
 
-dat<- data_summary2(out$sims.list$NJ)  
+dat<- data_summary2(out$sims.list$N[,1,])  
 plot( 1993:2018, dat$y, type="n", ylab="Abundance", xlab="Year", ylim=c(min(dat$ymin),max(dat$ymax)),
       xaxt="n", yaxt="n")
-axis(2, at=c(0,50,100), labels=c(0,50,100), tcl=-0.2, cex.axis=0.5, padj=3)
-axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+axis(2, at=c(0,15,30), labels=c(0,15,30), tcl=-0.2, cex.axis=0.75, padj=2)
+axis(1, at=c(1995,2000,2005,2010,2015), labels=c("","","","",""), tcl=-0.2, 
+     cex.axis=0.75, padj=-4)
 polygon(c(1993:2018, 2018:1993), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1993:2018, dat$y)
-lines( 1993:2018, datl$countJM , lty=2)
-title ("First-year males", cex.main=0.5, line=-0.5)
+lines( 1993:2018, datl$countOM , lty=2)
+title ("First-year males", cex.main=0.75, line=-0.5)
 
 dat<- data_summary2(out$sims.list$NF)  
 plot( 1993:2018, dat$y, type="n", ylab="Abundance", xlab="Year", ylim=c(min(dat$ymin),max(dat$ymax)),
       xaxt="n", yaxt="n")
-axis(2, at=c(0,50,100), labels=c(0,50,100), tcl=-0.2, cex.axis=0.5, padj=3)
+axis(2, at=c(0,15,30), labels=c(0,15,30), tcl=-0.2, cex.axis=0.75, padj=2)
 axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+     cex.axis=0.75, padj=-2.5)
 polygon(c(1993:2018, 2018:1993), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
 lines( 1993:2018, dat$y)
 lines( 1993:2018, datl$countFM , lty=2)
-title ("Nonbreeder males", cex.main=0.5, line=-0.5)
+title ("Nonbreeder males", cex.main=0.75, line=-0.5)
 
 dat<- data_summary2(out$sims.list$NB)  
 plot( 1993:2018, dat$y, type="n", ylab="Abundance", xlab="Year", ylim=c(min(dat$ymin),max(dat$ymax)),
       xaxt="n", yaxt="n")
-axis(2, at=c(0,75,150), labels=c(0,75,150), tcl=-0.2, cex.axis=0.5, padj=3)
+axis(2, at=c(0,30,60), labels=c(0,30,60), tcl=-0.2, cex.axis=0.75, padj=2)
 axis(1, at=c(1995,2000,2005,2010,2015), labels=c(1995,"",2005,"",2015), tcl=-0.2, 
-     cex.axis=0.5, padj=-4)
+     cex.axis=0.75, padj=-2.5)
 polygon(c(1993:2018, 2018:1993), c(dat$ymax, rev(dat$ymin)), border=NA, col="gray")
-lines( 1993:2018, dat$y)
+lines( 1993:2018, dat$y )
 lines( 1993:2018, datl$countBM , lty=2)
-title ("Breeder males", cex.main=0.5, line=-0.5)
-mtext("Abundance", side=2, outer=T, cex=0.5)
+title ("Breeder males", cex.main=0.75, line=-0.5)
+mtext("Abundance", side=2, outer=T, cex=1)
 dev.off()
 
 ####################
 ## ---- ipm population growth rates -------
 # Code adapted from Kery and Schaub 2012
-load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
+####################
+## ---- ipm population growth rates -------
+# Code adapted from Kery and Schaub 2012
+load("outputs\\ipm-em.Rdata")
 source(".\\HDIofMCMC.R")
 load(".\\data\\counts.Rdata")
 aug<- df.F$male_hacked
 nyears <- 26
 lam <- array(NA, dim = c(nyears-1,3), dimnames=list(1:25, c("md", "lhdi", "uhdi")))
-fit <- array(NA, dim = c(nyears-1,6,3), dimnames=list(1:(nyears-1), c("phiJ_fem", "phiJ_male", "phiF", "phiB", "fec", "hacked"), c("md", "lhdi", "uhdi")))
+fit <- array(NA, dim = c(nyears-1,8,3), dimnames=list(1:(nyears-1), 
+                                                      c("phiO_fem_wild", "phiO_male_wild", "phiO_fem_hacked", "phiO_male_hacked", "phiF", "phiB", "fec", "hacked"), c("md", "lhdi", "uhdi")))
 
 data_summary <- function(x) {
   m <- apply(x, 2, median) 
@@ -646,71 +657,88 @@ data_summary <- function(x) {
   return(list(y=m,ymin=ymin,ymax=ymax))
 }
 
+lam.sims <- array(NA, dim=c(nrow(out$sims.list$Ntot), ncol(out$sims.list$Ntot)-1 ) )
+for (t in 1:ncol(lam.sims)){    
+  lam.sims[,t] <-  out$sims.list$Ntot[,t+1]/(out$sims.list$Ntot[,t])
+} #t
 # skip first year bc 0/0 returns NAs and screws up functions
-lam[2:25,1] <- data_summary(out$sims.list$lambda[,2:25])$y
-lam[2:25,2] <- data_summary(out$sims.list$lambda[,2:25])$ymin
-lam[2:25,3] <- data_summary(out$sims.list$lambda[,2:25])$ymax
-lam[1,1] <- lam[1,1] <- lam[1,1] <- NA
+lam[,1] <- data_summary(lam.sims)$y
+lam[,2] <- data_summary(lam.sims)$ymin
+lam[,3] <- data_summary(lam.sims)$ymax
 
-# Survival Juv female
-fit[,1,1] <- data_summary(out$sims.list$eta.JSalpha[,1,])$y
-fit[,1,2] <- data_summary(out$sims.list$eta.JSalpha[,1,])$ymin
-fit[,1,3] <- data_summary(out$sims.list$eta.JSalpha[,1,])$ymax
+# Survival FY wild female
+fit[,1,1] <- data_summary(out$sims.list$eta.OSalpha[,1,1,])$y
+fit[,1,2] <- data_summary(out$sims.list$eta.OSalpha[,1,1,])$ymin
+fit[,1,3] <- data_summary(out$sims.list$eta.OSalpha[,1,1,])$ymax
 
-# Survival Juv female
-fit[,2,1] <- data_summary(out$sims.list$eta.JSalpha[,2,])$y
-fit[,2,2] <- data_summary(out$sims.list$eta.JSalpha[,2,])$ymin
-fit[,2,3] <- data_summary(out$sims.list$eta.JSalpha[,2,])$ymax
+# Survival FY wild male
+fit[,2,1] <- data_summary(out$sims.list$eta.OSalpha[,2,1,])$y
+fit[,2,2] <- data_summary(out$sims.list$eta.OSalpha[,2,1,])$ymin
+fit[,2,3] <- data_summary(out$sims.list$eta.OSalpha[,2,1,])$ymax
+
+# Survival FY hacked female
+fit[,3,1] <- data_summary(out$sims.list$eta.OSalpha[,1,2,])$y
+fit[,3,2] <- data_summary(out$sims.list$eta.OSalpha[,1,2,])$ymin
+fit[,3,3] <- data_summary(out$sims.list$eta.OSalpha[,1,2,])$ymax
+
+# Survival FY hacked male
+fit[,4,1] <- data_summary(out$sims.list$eta.OSalpha[,2,2,])$y
+fit[,4,2] <- data_summary(out$sims.list$eta.OSalpha[,2,2,])$ymin
+fit[,4,3] <- data_summary(out$sims.list$eta.OSalpha[,2,2,])$ymax
 
 # Survival Nonbreeder
-fit[,3,1] <- data_summary(out$sims.list$eta.FSalpha[,])$y
-fit[,3,2] <- data_summary(out$sims.list$eta.FSalpha[,])$ymin
-fit[,3,3] <- data_summary(out$sims.list$eta.FSalpha[,])$ymax
+fit[,5,1] <- data_summary(out$sims.list$eta.ASalpha[,])$y
+fit[,5,2] <- data_summary(out$sims.list$eta.ASalpha[,])$ymin
+fit[,5,3] <- data_summary(out$sims.list$eta.ASalpha[,])$ymax
 
 # Survival Nonbreeder
-fit[,4,1] <- data_summary(out$sims.list$eta.BSalpha[,])$y
-fit[,4,2] <- data_summary(out$sims.list$eta.BSalpha[,])$ymin
-fit[,4,3] <- data_summary(out$sims.list$eta.BSalpha[,])$ymax
+fit[,6,1] <- data_summary(out$sims.list$eta.BSalpha[,])$y
+fit[,6,2] <- data_summary(out$sims.list$eta.BSalpha[,])$ymin
+fit[,6,3] <- data_summary(out$sims.list$eta.BSalpha[,])$ymax
 
 # Fecundity 
-fit[,5,1] <- data_summary(out$sims.list$F[,1:25])$y
-fit[,5,2] <- data_summary(out$sims.list$F[,1:25])$ymin
-fit[,5,3] <- data_summary(out$sims.list$F[,1:25])$ymax
+fit[,7,1] <- data_summary(out$sims.list$F[,1:25])$y
+fit[,7,2] <- data_summary(out$sims.list$F[,1:25])$ymin
+fit[,7,3] <- data_summary(out$sims.list$F[,1:25])$ymax
 
 # Number hacked 
-fit[,6,1] <- aug[1:25]
+fit[,8,1] <- aug[1:25]
 
 # Calculate some correlation coefficients
-l.aug<- ifelse(aug[2:25]==0, log(0.001), log(aug[2:25]))
-n.iter <- dim(out$sims.list$l.mu.F)[[1]]
-correl.h <- array(NA, dim = c(n.iter,6))
+l.aug<- ifelse(aug[1:25]==0, log(0.001), log(aug[1:25]))
+n.iter <- nrow(out$sims.list$mu.F)
+correl.h <- array(NA, dim = c(n.iter,8))
 for (i in 1:n.iter){
-  correl.h[i,1] <- cor(out$sims.list$lambda[i,2:25], out$sims.list$eta.JSalpha[i,1,2:25])
-  correl.h[i,2] <- cor(out$sims.list$lambda[i,2:25], out$sims.list$eta.JSalpha[i,2,2:25])
-  correl.h[i,3] <- cor(out$sims.list$lambda[i,2:25], out$sims.list$eta.FSalpha[i,2:25])
-  correl.h[i,4] <- cor(out$sims.list$lambda[i,2:25], out$sims.list$eta.BSalpha[i,2:25])
-  correl.h[i,5] <- cor(out$sims.list$lambda[i,2:25], out$sims.list$F[i,2:25])
-  correl.h[i,6] <- cor(out$sims.list$lambda[i,2:25], l.aug)
+  correl.h[i,1] <- cor(lam.sims[i,], out$sims.list$eta.OSalpha[i,1,1,1:25])
+  correl.h[i,2] <- cor(lam.sims[i,], out$sims.list$eta.OSalpha[i,2,1,1:25])
+  correl.h[i,3] <- cor(lam.sims[i,], out$sims.list$eta.OSalpha[i,1,2,1:25])
+  correl.h[i,4] <- cor(lam.sims[i,], out$sims.list$eta.OSalpha[i,2,2,1:25])
+  correl.h[i,5] <- cor(lam.sims[i,], out$sims.list$eta.ASalpha[i,1:25])
+  correl.h[i,6] <- cor(lam.sims[i,], out$sims.list$eta.BSalpha[i,1:25])
+  correl.h[i,7] <- cor(lam.sims[i,], out$sims.list$F[i,2:26])
+  correl.h[i,8] <- cor(lam.sims[i,], l.aug)
 }
 
 # Credible intervals of correlation coefficients
-correl.est <- array(NA, dim=c(6,3))
+correl.est <- array(NA, dim=c(8,3))
 correl.est[1,2:3] <- HDIofMCMC(correl.h[,1], 0.90)
 correl.est[2,2:3] <- HDIofMCMC(correl.h[,2], 0.90)
 correl.est[3,2:3] <- HDIofMCMC(correl.h[,3], 0.90)
 correl.est[4,2:3] <- HDIofMCMC(correl.h[,4], 0.90)
 correl.est[5,2:3] <- HDIofMCMC(correl.h[,5], 0.90)
 correl.est[6,2:3] <- HDIofMCMC(correl.h[,6], 0.90)
+correl.est[7,2:3] <- HDIofMCMC(correl.h[,7], 0.90)
+correl.est[8,2:3] <- HDIofMCMC(correl.h[,8], 0.90)
 
 # Compute the posterior modes of correlation coefficients
-for (j in 1:6){
+for (j in 1:8){
   m <- density(correl.h[,j], na.rm = TRUE)
   correl.est[j,1]<- m$x[which(m$y==max(m$y))]
 }
 correl.est <- round(correl.est,2)
 
 # Probability that correlation coefficients (r) > 0
-n.iter <- dim(out$sims.list$l.mu.F)[[1]]
+n.iter <- nrow(out$sims.list$mu.F)
 P <- c()
 P[1] <- sum(correl.h[!is.na(correl.h[,1]),1]>0)/n.iter
 P[2] <- sum(correl.h[!is.na(correl.h[,2]),2]>0)/n.iter
@@ -718,112 +746,147 @@ P[3] <- sum(correl.h[!is.na(correl.h[,3]),3]>0)/n.iter
 P[4] <- sum(correl.h[!is.na(correl.h[,4]),4]>0)/n.iter
 P[5] <- sum(correl.h[!is.na(correl.h[,5]),5]>0)/n.iter
 P[6] <- sum(correl.h[!is.na(correl.h[,6]),6]>0)/n.iter
+P[7] <- sum(correl.h[!is.na(correl.h[,7]),7]>0)/n.iter
+P[8] <- sum(correl.h[!is.na(correl.h[,8]),8]>0)/n.iter
 P <- round(P,2)
 
 # Plot Fig. 9
-pdf(file="figs\\Corr_plots.pdf", width=3.14, height=2.3)
+library (viridis)
+tiff(file="figs\\Corr_plots.tiff", 
+     width=4.0, height=2.3, res=600, units="in")
 txt <- 0.5
-txt2 <- 0.7
+txt2 <- 0.6
 pt.sz <- 0.5
-mar<- c(3, 1, 0.5, 0.5)
+mar<- c(4, 1, 0.5, 0.5)
 lwd <- 0.7
-par(mfrow = c(2, 3), mar = mar, mgp=c(1, 0.6, 0), las = 1, oma=c(0,2.5,0,0), cex = txt)
+par(mfrow = c(2, 4), mar = mar, mgp=c(1, 0.6, 0), las = 1, oma=c(0,3,0,0), cex = txt)
 linecol <- c("grey50")
 
 par(mar = mar)
-plot(y = lam[2:25], fit[2:25,"phiB",1], type = "n", 
+plot(y = lam[,1], fit[,"phiB",1], type = "n", 
      xlim = c(0.3, 1.0), ylim = c(0, 3), yaxt="n", xaxt="n",
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3))
+axis(2, at=c(0, 1.0, 2, 3))
 axis(1, at=c(0.3, 0.65, 1), labels=c("0.3","0.65", "1"))
 mtext(text="Breeder survival", side=1, line=1.5, cex=txt)
-abline(v=seq(0, 1, by=0.1), lty=1, lwd=0.5, col="gray")
-abline(h=seq(0, 3.0, by=0.5), lty=1, lwd=0.5, col="gray")
-segments(x0=fit[2:25,"phiB",2], y0=lam[2:25,1], x1=fit[2:25,"phiB",3], y1=lam[2:25,1], col = linecol, lwd=lwd)
-segments(x0=fit[2:25,"phiB",1], y0=lam[2:25,2], x1=fit[2:25,"phiB",1], y1=lam[2:25,3], col = linecol, lwd=lwd)
-points(y = lam[2:25], fit[2:25,"phiB",1], pch = 19, col = "black", cex=pt.sz)
-text(x = 0.3, y = 2.7, paste("r = ",correl.est[4,1], " (",correl.est[4,2],", ", correl.est[4,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
-text(x = 0.3, y = 2.3, paste("P(r>0) = ", P[4], sep=""), pos = 4, font = 3, cex = txt2)
+segments(x0=fit[,"phiB",2], y0=lam[,1], x1=fit[,"phiB",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiB",1], y0=lam[,2], x1=fit[,"phiB",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiB",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0.3, y = 2.8, paste("r = ",correl.est[6,1], " (",correl.est[6,2],", ", correl.est[6,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
+text(x = 0.3, y = 2.3, paste("P(r>0) = ", P[6], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
-
 
 par(mar = mar)
-plot(y = lam[2:25], l.aug, type = "n", 
+plot(y = lam[,1], l.aug, type = "n", 
      xlim = c(log(0.001), log(70)), ylim = c(0, 3), yaxt="n", xaxt="n",
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3), labels=F)
+axis(2, at=c(0, 1.0, 2, 3), labels=F)
 axis(1, at=c(log(0.001), log(1), log(70)), labels=c(0, 1, 70))
-mtext(text="Number hacked (log)", side=1, line=1.5, cex=txt)
-segments(x0=l.aug, y0=lam[2:25,2], x1=l.aug, y1=lam[2:25,3], col = linecol, lwd=lwd)
-points(y = lam[2:25], l.aug, pch = 19, col = "black", cex=pt.sz)
-text(x = log(0.001), y = 2.7, paste("r = ",correl.est[6,1], " (",correl.est[6,2],", ", correl.est[6,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
-text(x = log(0.001), y = 2.3, paste("P(r>0) = ", P[6], sep=""), pos = 4, font = 3, cex = txt2)
+mtext(text="Number hacked\n(log)", side=1, line=2.5, cex=txt)
+segments(x0=l.aug, y0=lam[,2], x1=l.aug, y1=lam[,3], col = linecol, lwd=lwd)
+#points(y = lam[,1], x=l.aug, pch = 19, col = viridis(length(lam[,1])), cex=pt.sz)
+points(y = lam[,1], x=l.aug, pch = 19, col = "black", cex=pt.sz)
+text(x = log(0.001), y = 2.8, paste("r = ",correl.est[8,1], " (",correl.est[8,2],", ", correl.est[8,3], ")", sep=""),
+     pos = 4, font = 3, cex = txt2)
+text(x = log(0.001), y = 2.3, paste("P(r>0) = ", P[8], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
 
-plot(y = lam[2:25], fit[1:24,"phiJ_fem",1], type = "n", 
+plot(y = lam[,1], fit[,"phiO_fem_wild",1], type = "n", 
      xlim = c(0.0, 0.8), ylim = c(0, 3), yaxt="n", xaxt="n", 
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3), labels=F)
+axis(2, at=c(0, 1.0, 2, 3), labels=F)
 axis(1, at=c(0, 0.4, 0.8))
-mtext(text="Juvenile survival female", side=1, line=1.5, cex=txt)
-abline(v=seq(0, 1, by=0.1), lty=1, lwd=0.5, col="gray")
-abline(h=seq(0, 3.0, by=0.5), lty=1, lwd=0.5, col="gray")
-segments(x0=fit[2:25,"phiJ_fem",2], y0=lam[2:25,1], x1=fit[2:25,"phiJ_fem",3], y1=lam[2:25,1], col = linecol, lwd=lwd)
-segments(x0=fit[2:25,"phiJ_fem",1], y0=lam[2:25,2], x1=fit[2:25,"phiJ_fem",1], y1=lam[2:25,3], col = linecol, lwd=lwd)
-points(y = lam[2:25], fit[2:25,"phiJ_fem",1], pch = 19, col = "black", cex=pt.sz)
-text(x = 0, y = 2.7, paste("r = ",correl.est[1,1], " (",correl.est[1,2],", ", correl.est[1,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
+mtext(text="First-year survival\nwild female", side=1, line=2.5, cex=txt)
+segments(x0=fit[,"phiO_fem_wild",2], y0=lam[,1], x1=fit[,"phiO_fem_wild",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiO_fem_wild",1], y0=lam[,2], x1=fit[,"phiO_fem_wild",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiO_fem_wild",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0, y = 2.8, paste("r = ",correl.est[1,1], " (",correl.est[1,2],", ", correl.est[1,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
 text(x = 0, y = 2.3, paste("P(r>0) = ", P[1], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
 
 par(mar = mar)
-plot(y = lam[2:25], fit[2:25,"phiJ_male",1], type = "n", 
+plot(y = lam[,1], fit[,"phiO_male_wild",1], type = "n", 
      xlim = c(0.0, 0.5), ylim = c(0, 3), yaxt="n", xaxt="n",
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3))
+axis(2, at=c(0, 1.0, 2, 3), labels=c("", "", "", ""))
 axis(1, at=c(0, 0.25, 0.5), labels=c("0", "0.25", "0.5"))
-mtext(text="Juvenile survival male", side=1, line=1.5, cex=txt)
-abline(v=seq(0, 1, by=0.1), lty=1, lwd=0.5, col="gray")
-abline(h=seq(0, 3.0, by=0.5), lty=1, lwd=0.5, col="gray")
-segments(x0=fit[2:25,"phiJ_male",2], y0=lam[2:25,1], x1=fit[2:25,"phiJ_male",3], y1=lam[2:25,1], col = linecol, lwd=lwd)
-segments(x0=fit[2:25,"phiJ_male",1], y0=lam[2:25,2], x1=fit[2:25,"phiJ_male",1], y1=lam[2:25,3], col = linecol, lwd=lwd)
-points(y = lam[2:25], fit[2:25,"phiJ_male",1], pch = 19, col = "black", cex=pt.sz)
-text(x = 0, y = 2.7, paste("r = ",correl.est[2,1], " (",correl.est[2,2],", ", correl.est[2,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
+mtext(text="First-year survival\nwild male", side=1, line=2.5, cex=txt)
+segments(x0=fit[,"phiO_male_wild",2], y0=lam[,1], x1=fit[,"phiO_male_wild",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiO_male_wild",1], y0=lam[,2], x1=fit[,"phiO_male_wild",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiO_male_wild",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0, y = 2.8, paste("r = ",correl.est[2,1], " (",correl.est[2,2],", ", correl.est[2,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
 text(x = 0, y = 2.3, paste("P(r>0) = ", P[2], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
 
+##########
+# plot.new()
+# legend("topleft", legend=c(1994:2018)[c(2,7,12,17,22)] , col=viridis(length(lam[,1]))[c(2,7,12,17,22)], 
+#        pch=16, xpd=NA, ncol=1)
+
 par(mar = mar)
-plot(y = lam[2:25], fit[2:25,"phiF",1], type = "n", 
-     xlim = c(0.6, 0.9), ylim = c(0, 3), yaxt="n", xaxt="n",
+plot(y = lam[,1], fit[,"phiO_fem_hacked",1], type = "n", 
+     xlim = c(0.0, 0.5), ylim = c(0, 3), yaxt="n", xaxt="n",
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3), labels=F)
-axis(1, at=c(0.6, 0.75, 0.9), labels=c("0.6", "0.75", "0.9"))
-mtext(text="Nonbreeder survival", side=1, line=1.5, cex=txt)
-abline(v=seq(0, 1, by=0.1), lty=1, lwd=0.5, col="gray")
-abline(h=seq(0, 3.0, by=0.5), lty=1, lwd=0.5, col="gray")
-segments(x0=fit[2:25,"phiF",2], y0=lam[2:25,1], x1=fit[2:25,"phiF",3], y1=lam[2:25,1], col = linecol, lwd=lwd)
-segments(x0=fit[2:25,"phiF",1], y0=lam[2:25,2], x1=fit[2:25,"phiF",1], y1=lam[2:25,3], col = linecol, lwd=lwd)
-points(y = lam[2:25], fit[2:25,"phiF",1], pch = 19, col = "black", cex=pt.sz)
-text(x = 0.6, y = 2.7, paste("r = ",correl.est[3,1], " (",correl.est[3,2],", ", correl.est[3,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
-text(x = 0.6, y = 2.3, paste("P(r>0) = ", P[3], sep=""), pos = 4, font = 3, cex = txt2)
+axis(2, at=c(0, 1.0, 2, 3))
+axis(1, at=c(0, 0.25, 0.5), labels=c("0", "0.25", "0.5"))
+mtext(text="First-year survival\nhacked female", side=1, line=2.5, cex=txt)
+segments(x0=fit[,"phiO_fem_hacked",2], y0=lam[,1], x1=fit[,"phiO_fem_hacked",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiO_fem_hacked",1], y0=lam[,2], x1=fit[,"phiO_fem_hacked",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiO_fem_hacked",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0, y = 2.8, paste("r = ",correl.est[3,1], " (",correl.est[3,2],", ", correl.est[3,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
+text(x = 0, y = 2.3, paste("P(r>0) = ", P[3], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
 
 par(mar = mar)
-plot(y = lam[2:25], fit[2:25,"fec",1], type = "n", 
+plot(y = lam[,1], fit[,"phiO_male_hacked",1], type = "n", 
+     xlim = c(0.0, 0.5), ylim = c(0, 3), yaxt="n", xaxt="n",
+     ylab = "", xlab = "", frame = FALSE, pch = 19)
+axis(2, at=c(0, 1.0, 2, 3), labels=c("", "", "", ""))
+axis(1, at=c(0, 0.25, 0.5), labels=c("0", "0.25", "0.5"))
+mtext(text="First-year survival\nhacked male", side=1, line=2.5, cex=txt)
+segments(x0=fit[,"phiO_male_hacked",2], y0=lam[,1], x1=fit[,"phiO_male_hacked",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiO_male_hacked",1], y0=lam[,2], x1=fit[,"phiO_male_hacked",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiO_male_hacked",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0, y = 2.8, paste("r = ",correl.est[4,1], " (",correl.est[4,2],", ", correl.est[4,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
+text(x = 0, y = 2.3, paste("P(r>0) = ", P[4], sep=""), pos = 4, font = 3, cex = txt2)
+abline(h=1, lty=2, lwd=1)
+
+par(mar = mar)
+plot(y = lam[,1], fit[,"phiF",1], type = "n", 
+     xlim = c(0.6, 0.9), ylim = c(0, 3), yaxt="n", xaxt="n",
+     ylab = "", xlab = "", frame = FALSE, pch = 19)
+axis(2, at=c(0, 1.0, 2, 3), labels=c("", "", "", ""))
+axis(1, at=c(0.6, 0.75, 0.9), labels=c("0.6", "0.75", "0.9"))
+mtext(text="Nonbreeder\nsurvival", side=1, line=2.5, cex=txt)
+segments(x0=fit[,"phiF",2], y0=lam[,1], x1=fit[,"phiF",3], y1=lam[,1], col = linecol, lwd=lwd)
+segments(x0=fit[,"phiF",1], y0=lam[,2], x1=fit[,"phiF",1], y1=lam[,3], col = linecol, lwd=lwd)
+points(y = lam[,1], fit[,"phiF",1], pch = 19, col = "black", cex=pt.sz)
+text(x = 0.6, y = 2.8, paste("r = ",correl.est[5,1], " (",correl.est[5,2],", ", correl.est[5,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
+text(x = 0.6, y = 2.3, paste("P(r>0) = ", P[5], sep=""), pos = 4, font = 3, cex = txt2)
+abline(h=1, lty=2, lwd=1)
+
+par(mar = mar)
+plot(y = lam[2:25,1], fit[1:24,"fec",1], type = "n", 
      xlim = c(0, 2.2), ylim = c(0, 3), yaxt="n", xaxt="n",
      ylab = "", xlab = "", frame = FALSE, pch = 19)
-axis(2, at=c(0, 1.0, 1.5, 3), labels=F)
+axis(2, at=c(0, 1.0, 2, 3), labels=c("", "", "", ""))
 axis(1, at=c(0, 1.1, 2.2))
 mtext(text="Fecundity", side=1, line=1.5, cex=txt)
-abline(v=seq(0, 2.2, by=0.2), lty=1, lwd=0.5, col="gray")
-abline(h=seq(0, 3.0, by=0.5), lty=1, lwd=0.5, col="gray")
 segments(x0=fit[2:25,"fec",2], y0=lam[2:25,1], x1=fit[2:25,"fec",3], y1=lam[2:25,1], col = linecol, lwd=lwd)
 segments(x0=fit[2:25,"fec",1], y0=lam[2:25,2], x1=fit[2:25,"fec",1], y1=lam[2:25,3], col = linecol, lwd=lwd)
 points(y = lam[2:25], fit[2:25,"fec",1], pch = 19, col = "black", cex=pt.sz)
-text(x = 0, y = 2.7, paste("r = ",correl.est[5,1], " (",correl.est[5,2],", ", correl.est[5,3], ")", sep=""), pos = 4, font = 3, cex = txt2)
-text(x = 0, y = 2.3, paste("P(r>0) = ", P[5], sep=""), pos = 4, font = 3, cex = txt2)
+text(x = 0, y = 2.8, paste("r = ",correl.est[7,1], " (",correl.est[7,2],", ", correl.est[7,3], ")", sep=""), 
+     pos = 4, font = 3, cex = txt2)
+text(x = 0, y = 2.3, paste("P(r>0) = ", P[7], sep=""), pos = 4, font = 3, cex = txt2)
 abline(h=1, lty=2, lwd=1)
 
-mtext("Population growth rate", side=2, line=1, las=3, outer=T, cex=0.7)
+mtext("Population growth rate", side=2, line=1.5, las=3, outer=T, cex=0.7)
+
 dev.off()
 
 ##############################################
@@ -878,7 +941,6 @@ corest<- cbind(correl.est, correl.est2)
 rownames(corest) <- c("surv.fy.f surv.j.m", "surv.fy.f surv.nb", "surv.fy.f surv.b", "surv.fy.f F",
                       "surv.fy.m surv.nb", "surv.fy.m surv.b", "surv.fy.m F",
                       "surv.nb surv.b", "surv.nb F", "surv.b F")
-
 
 
 ######################################
@@ -1036,7 +1098,7 @@ mean(datl$prod, na.rm=T)
 sd(datl$prod, na.rm=T)
 
 ## ---- immigration ---------
-load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
+load("outputs\\ipm-ie.Rdata")
 source("R/HDIofMCMC.R")
 options(scipen = 100)
 x <- seq(from=0, to=4, by=0.01)

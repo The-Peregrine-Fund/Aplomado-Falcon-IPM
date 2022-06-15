@@ -31,7 +31,7 @@ cat("
     #     6 Emigrated and alive
     #     7 Emigrated and dead
     #   Groups
-    #     1 wild born
+    #     1 wild hatched
     #     2 hacked
     #   Sex
     #     1 female

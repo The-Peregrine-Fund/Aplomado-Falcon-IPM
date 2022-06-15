@@ -267,8 +267,8 @@ temp.df<- data.frame(Draws=O.surv[,1], Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=O.surv[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=B.surv[,1], Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=B.surv[,2], Cat="Sex", State="Breeder")
-temp.df4<- data.frame(Draws=A.surv[,1], Cat="Hacked", State="Nonbreeder")
-temp.df5<- data.frame(Draws=A.surv[,2], Cat="Sex", State="Nonbreeder")
+temp.df4<- data.frame(Draws=A.surv[,1], Cat="Hacked", State="Non-breeder")
+temp.df5<- data.frame(Draws=A.surv[,2], Cat="Sex", State="Non-breeder")
 df.surv<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
 df.surv$combined<- factor(paste(df.surv$State, df.surv$Cat))
 df.surv$combined <- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
@@ -278,8 +278,8 @@ temp.df<- data.frame(Draws=O.rec[,1], Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=O.rec[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=B.rec[,1], Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=B.rec[,2], Cat="Sex", State="Breeder")
-temp.df4<- data.frame(Draws=A.rec[,1], Cat="Hacked", State="Nonbreeder")
-temp.df5<- data.frame(Draws=A.rec[,2], Cat="Sex", State="Nonbreeder")
+temp.df4<- data.frame(Draws=A.rec[,1], Cat="Hacked", State="Non-breeder")
+temp.df5<- data.frame(Draws=A.rec[,2], Cat="Sex", State="Non-breeder")
 df.rec<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
 df.rec$combined<- factor(paste(df.rec$State, df.rec$Cat))
 df.rec$combined <- factor(df.rec$combined, levels=levels(df.rec$combined)[c(3,4,5,6,1,2)])
@@ -288,9 +288,9 @@ df.rec$combined <- factor(df.rec$combined, levels=levels(df.rec$combined)[c(3,4,
 temp.df2<- data.frame(Draws=B.resight[,1], Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=B.resight[,2], Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=B.resight[,3], Cat="Effort", State="Breeder")
-temp.df5<- data.frame(Draws=A.resight[,1], Cat="Hacked", State="Nonbreeder")
-temp.df6<- data.frame(Draws=A.resight[,2], Cat="Sex", State="Nonbreeder")
-temp.df7<- data.frame(Draws=A.resight[,3], Cat="Effort", State="Nonbreeder")
+temp.df5<- data.frame(Draws=A.resight[,1], Cat="Hacked", State="Non-breeder")
+temp.df6<- data.frame(Draws=A.resight[,2], Cat="Sex", State="Non-breeder")
+temp.df7<- data.frame(Draws=A.resight[,3], Cat="Effort", State="Non-breeder")
 df.resight<- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
 df.resight$combined<- factor(paste(df.resight$State, df.resight$Cat))
 df.resight$combined <- factor(df.resight$combined, levels=c(levels(df.resight$combined)[c(4,5,6,1,2,3)])) 
@@ -324,12 +324,13 @@ knitr::kable(ests, caption="Table S1. Estimates of differences between groups fo
 ```{r survdiffs2, fig.width=10, fig.height=10, fig.cap= "Fig. S1. Violin plots of differences in survival, recruitment, and recapture estimates from global CJS survival model. Differences were considered potentially important when 85% highest density intervals did not intersect zero."}
 txt <- 30
 lwd <- 1.5
-df.surv$State <- factor(df.surv$State, levels=c("First-year", "Nonbreeder", "Breeder"))
+df.surv$State <- factor(df.surv$State, levels=c("First-year", "Non-breeder", "Breeder"))
 
 ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) + scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) +
+  geom_violin(aes(fill=State)) + scale_fill_manual(values=c("First-year"="#f7f7f7",
+    "Non-breeder"="#cccccc", "Breeder"="#969696")) +
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +  
   ylab("Survival\ndifference") + xlab ("") + 
@@ -338,7 +339,8 @@ ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
 pt <- ggplot(df.rec, aes(x = combined, y = Draws, group=combined )) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("#f7f7f7", "#cccccc", "#969696")) + 
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("First-year"="#f7f7f7",
+    "Non-breeder"="#cccccc", "Breeder"="#969696")) + 
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Recruitment\ndifference") + xlab ("") + 
@@ -347,7 +349,8 @@ pt <- ggplot(df.rec, aes(x = combined, y = Draws, group=combined )) +
 pr <- ggplot(df.resight, aes(x = combined, y = Draws, group=combined)) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c( "#cccccc", "#969696")) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("First-year"="#f7f7f7",
+    "Non-breeder"="#cccccc", "Breeder"="#969696")) +
   stat_summary(fun.data=data_summary2,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
   ylab("Resight\ndifference") + xlab ("") + 
@@ -412,14 +415,64 @@ knitr::read_chunk('R/03-run-ipm-immigration-JAGS.R')
 ```
 
 ### 1.5.3 The Importance of Immigration
+```{r,immigration, eval=TRUE}
+## ---- immigration ---------
+# plot priors and posteriors of immigration
+load("outputs\\ipm-ie.Rdata")
+source("R/HDIofMCMC.R")
+options(scipen = 100)
+x <- seq(from=0, to=4, by=0.01)
+df <- data.frame(x=x, prior=dnorm(x,0,1))
+df2 <- data.frame(omegaA=out$sims.list$omegaA1, 
+                  omegaB=out$sims.list$omegaB1)
+```
 
+```{r ImmPriorPost1, fig.width=6, fig.height=4, fig.cap= "Fig. S4. Immigration priors and posteriors of nonbreeders.", fig.show="hold", out.width="100%"}
+par(mar=c(5,5,2,5))
+plot(df$x, df$prior, type="l", lwd=2, xlim=c(0,4),
+     ylab="Prior density (black line)", 
+     xlab=expression(paste("Immigration rate (",omega,")", sep="")),
+     main="Nonbreeders")
+par(new=TRUE)
+plot(density(df2$omegaA), type="l", lwd=2, xlim=c(0,4),
+     main="", col="blue",
+     axes = FALSE, xlab = "", ylab = "")
+axis(side = 4, at = c(0,30,60))      # Add second axis
+mtext("Posterior density (blue line)", side = 4, line = 3)  
+```
 
-![Fig. S4. A comparison of prior and posterior densities of immigration rate.](figs/Immigration_post_prior.png)
+```{r ImmPriorPost2, fig.width=6, fig.height=4, fig.cap= "Fig. S5. Immigration priors and posteriors of breeders.", fig.show="hold", out.width="100%"}
+# Plot immigration of breeders
+par(mar=c(5,5,2,5))
+plot(df$x, df$prior, type="l", lwd=2, xlim=c(0,4),
+     ylab="Prior density (black line)", 
+     xlab=expression(paste("Immigration rate (",omega,")", sep="")),
+     main="Breeders")
+par(new=TRUE)
+plot(density(df2$omegaB), type="l", lwd=2, xlim=c(0,4),
+     main="", col="blue",
+     axes = FALSE, xlab = "", ylab = "")
+axis(side = 4, at = c(0,30,60))      # Add second axis
+mtext("Posterior density (blue line)", side = 4, line = 3) 
+```
 
+```{r ImmHist1, fig.width=6, fig.height=4, fig.cap= "Fig. S6. Histogram and point estimates of Immigration of nonbreeders", fig.show="hold", out.width="100%"}
+hist(out$sims.list$omegaA1, main="Histogram of Immigration\nNonbreeders", xlab="Posterior draws of immigration")
+abline(v=median(out$sims.list$omegaA1), lwd=2)
+abline(v=HDIofMCMC(out$sims.list$omegaA1, cred=0.95), lty=2, lwd=2)
+median(out$sims.list$omegaA1)
+HDIofMCMC(out$sims.list$omegaA1, cred=0.95)
+```
 
-
-
-![Fig. S5. A histogram of immigration rate with vertical lines depicting the median (solid) and 95% HDIs (dashed).](figs/Immigration hist.png)
+```{r ImmHist2, fig.width=6, fig.height=4, fig.cap= "Fig. S7. Histogram and point estimates of Immigration of breeders", fig.show="hold", out.width="100%"}
+hist(out$sims.list$omegaB1, main="Histogram of Immigration\nBreeders", xlab="Posterior draws of immigration")
+abline(v=median(out$sims.list$omegaB1), lwd=2)
+abline(v=HDIofMCMC(out$sims.list$omegaB1, cred=0.95), lty=2, lwd=2)
+median(out$sims.list$omegaB1)
+HDIofMCMC(out$sims.list$omegaB1, cred=0.95)
+db <- density(out$sims.list$omegaB1)
+db$x[which(db$y==max(db$y))]
+```
 
 # 2. Implementation of the Integrated Population Model without Immigration for Evaluation of Vital Rates
 ## 2.1 JAGS and R Code for the IPM without Immigration 
@@ -428,9 +481,11 @@ knitr::read_chunk('R/04-run-ipm-no-immigration-JAGS.R')
 ```
 ```{r,ipm2, eval=FALSE}
 ```
+
+
 ## 2.2 Postprocess Model Output  
-```{r ppipm, eval=FALSE}
-load(".\\outputs\\ipm-jags-noimm-GOF-pois.Rdata") # load model output
+```{r ppipm, eval=TRUE}
+load(".\\outputs\\ipm-e.Rdata") # load model output
 library (jagsUI)
 library (ggplot2)
 library (gridExtra)
@@ -454,8 +509,14 @@ O.surv <- O.trans <- A.surv <- A.trans <- B.surv <- B.trans <-
 B.recap <-array(NA, dim=c(dim(out$sims.list$mu.pB1)[1],2))
 A.recap <-array(NA, dim=c(dim(out$sims.list$mu.pA1)[1],2))
 
-# First-years (O the letter)
-O.surv[,2]<- out$sims.list$OSalpha1[,1] - out$sims.list$OSalpha1[,2] # Survival female - male
+# Survival
+# wild - hacked
+O.surv[,1]<- (out$sims.list$OSalpha1[,1,1] +         out$sims.list$OSalpha1[,2,1])/2 -
+  (out$sims.list$OSalpha1[,1,2] + out$sims.list$OSalpha1[,2,2])/2
+# female - male
+O.surv[,2]<- (out$sims.list$OSalpha1[,1,1] + out$sims.list$OSalpha1[,1,2])/2 -
+  (out$sims.list$OSalpha1[,2,1] + out$sims.list$OSalpha1[,2,2])/2
+# Recruitment
 O.trans[,2]<- out$sims.list$OBRalpha1[,1] - out$sims.list$OBRalpha1[,2]# Recruitment female - male
 # Nonbreeder (A) Recruitment
 A.trans[,1]<- (out$sims.list$ABRalpha1[,1,1] + out$sims.list$ABRalpha1[,2,1])/2 -
@@ -469,52 +530,54 @@ A.recap[,2] <- (out$sims.list$mu.pA1[,2,1] + out$sims.list$mu.pA1[,2,2])/2 -
             (out$sims.list$mu.pA1[,1,1] + out$sims.list$mu.pA1[,1,2])/2 # high effort - low # Resight probabilities of nonbreeders indexed as mu.pB1 [effort]
 B.recap[,1] <- out$sims.list$mu.pB1[,2] - out$sims.list$mu.pB1[,1] # high effort - low effort
 
-tab <- data.frame(stage= c("First-year", "First-year", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Breeder"),
-                  param= c("Survival", "Transition", "Transition", "Transition", "Resight", "Resight", "Resight"),
-                  comp= c("Sex", "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
+tab <- data.frame(stage= c("First-year", "First-year", "First-year", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder", "Breeder"),
+                  param= c("Survival", "Survival","Recruitment", "Recruitment", "Recruitment", "Resight", "Resight", "Resight"),
+                  comp= c("Sex", "Hacked", "Sex", "Hacked", "Sex", "Hacked", "Effort", "Effort" ),
                   median=NA, LHDI95=NA, UHDI95=NA, P=NA, important=NA)
 tab[1, 4:6]<- round(data_summary95(O.surv[,2]),3)
-tab[2, 4:6]<- round(data_summary95(O.trans[,2]),3)
-tab[3, 4:6]<- round(data_summary95(A.trans[,1]),3)
-tab[4, 4:6]<- round(data_summary95(A.trans[,2]),3)
-tab[5, 4:6]<- round(data_summary95(A.recap[,1]),3)
-tab[6, 4:6]<- round(data_summary95(A.recap[,2]),3)
-tab[7, 4:6]<- round(data_summary95(B.recap[,1]),3)
+tab[2, 4:6]<- round(data_summary95(O.surv[,1]),3)
+tab[3, 4:6]<- round(data_summary95(O.trans[,2]),3)
+tab[4, 4:6]<- round(data_summary95(A.trans[,1]),3)
+tab[5, 4:6]<- round(data_summary95(A.trans[,2]),3)
+tab[6, 4:6]<- round(data_summary95(A.recap[,1]),3)
+tab[7, 4:6]<- round(data_summary95(A.recap[,2]),3)
+tab[8, 4:6]<- round(data_summary95(B.recap[,1]),3)
 tab$important <- ifelse( ((tab$LHDI95 >= 0 & tab$UHDI95>=0) |
                              (tab$LHDI95 <= 0 & tab$UHDI95<=0)) &
                             (tab$LHDI95 != 0 & tab$UHDI95!=0), 
                           "yes", "no") 
 tab$P[1] <- round(sum(O.surv[,2]>0)/length(O.surv[,2]),2)
-tab$P[2] <- round(sum(O.trans[,2]<0)/length(O.trans[,2]),2)
-tab$P[3] <- round(sum(A.trans[,1]>0)/length(A.trans[,1]),2)
-tab$P[4] <- round(sum(A.trans[,2]<0)/length(A.trans[,2]),2)
-tab$P[5] <- round(sum(A.recap[,1]>0)/length(A.recap[,1]),2)
-tab$P[6] <- round(sum(A.recap[,2]>0)/length(A.recap[,2]),2)
-tab$P[7] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
+tab$P[2] <- round(sum(O.surv[,2]>0)/length(O.surv[,1]),2)
+tab$P[3] <- round(sum(O.trans[,2]<0)/length(O.trans[,2]),2)
+tab$P[4] <- round(sum(A.trans[,1]>0)/length(A.trans[,1]),2)
+tab$P[5] <- round(sum(A.trans[,2]<0)/length(A.trans[,2]),2)
+tab$P[6] <- round(sum(A.recap[,1]>0)/length(A.recap[,1]),2)
+tab$P[7] <- round(sum(A.recap[,2]>0)/length(A.recap[,2]),2)
+tab$P[8] <- round(sum(B.recap[,1]>0)/length(B.recap[,1]),2)
 print(tab)
 
 ## ---- ipm postprocess 2 --------
 # combine survival data
-temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
+temp.df<- data.frame(Draws=O.surv[,1], Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=O.surv[,2], Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
 temp.df5<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
-df.surv<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
-df.surv$combined<- factor(paste(df.surv$State, df.surv$Cat))
-df.surv$combined <- factor(df.surv$combined, levels=levels(df.surv$combined)[c(3,4,5,6,1,2)])
+df.surv2<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.surv2$combined<- factor(paste(df.surv2$State, df.surv2$Cat))
+df.surv2$combined <- factor(df.surv2$combined, levels=levels(df.surv2$combined)[c(3,4,5,6,1,2)])
 
-# combine transitions data
+# combine recruitment data
 temp.df<- data.frame(Draws=0, Cat="Hacked", State="First-year")
 temp.df1<- data.frame(Draws=0, Cat="Sex", State="First-year")
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
 temp.df3<- data.frame(Draws=0, Cat="Sex", State="Breeder")
 temp.df4<- data.frame(Draws=A.trans[,1], Cat="Hacked", State="Non-breeder")
 temp.df5<- data.frame(Draws=A.trans[,2], Cat="Sex", State="Non-breeder")
-df.trans<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
-df.trans$combined<- factor(paste(df.trans$State, df.trans$Cat))
-df.trans$combined <- factor(df.trans$combined, levels=levels(df.trans$combined)[c(3,4,5,6,1,2)])
+df.rec2<- rbind(temp.df, temp.df1, temp.df2, temp.df3, temp.df4, temp.df5)
+df.rec2$combined<- factor(paste(df.rec2$State, df.rec2$Cat))
+df.rec2$combined <- factor(df.rec2$combined, levels=levels(df.rec2$combined)[c(3,4,5,6,1,2)])
 
 # combine resight data
 temp.df2<- data.frame(Draws=0, Cat="Hacked", State="Breeder")
@@ -523,57 +586,57 @@ temp.df4<- data.frame(Draws=B.recap[,1], Cat="Effort", State="Breeder")
 temp.df5<- data.frame(Draws=0, Cat="Hacked", State="Non-breeder")
 temp.df6<- data.frame(Draws=0, Cat="Sex", State="Non-breeder")
 temp.df7<- data.frame(Draws=A.recap[,2], Cat="Effort", State="Non-breeder")
-df.recap<- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
-df.recap$combined<- factor(paste(df.recap$State, df.recap$Cat))
-df.recap$combined <- factor(df.recap$combined, levels=c(levels(df.recap$combined)[c(4,5,6,1,2,3)])) #"First-year Hacked", "First-year Sex", 
+df.recap2<- rbind(temp.df2, temp.df3, temp.df4, temp.df5, temp.df6, temp.df7)
+df.recap2$combined<- factor(paste(df.recap2$State, df.recap2$Cat))
+df.recap2$combined <- factor(df.recap2$combined, levels=c(levels(df.recap2$combined)[c(4,5,6,1,2,3)])) #"First-year Hacked", "First-year Sex", 
 # fix level order for plots
 ord <- c("First-year","Non-breeder","Breeder")
-df.surv$State <-  factor(df.surv$State, levels=ord, labels=ord) 
-df.trans$State <-  factor(df.trans$State, levels=ord, labels=ord) 
-df.recap$State <-  factor(df.recap$State, levels=ord[-1], labels=ord[-1]) 
+df.surv2$State <-  factor(df.surv2$State, levels=ord, labels=ord) 
+df.rec2$State <-  factor(df.rec2$State, levels=ord, labels=ord) 
+df.recap2$State <-  factor(df.recap2$State, levels=ord[-1], labels=ord[-1]) 
+ 
+```
 
-# plots
+
+```{r survdiffs3, fig.width=10, fig.height=10, fig.cap= "Fig. S8. Violin plots of differences in survival, recruitment, and recapture estimates from IPM without immigration."}
+data_summary <- function(x,...) {
+  m <- median(x)
+  ymin <- HDIofMCMC(x, credMass=0.95)[[1]]
+  ymax <- HDIofMCMC(x, credMass=0.95)[[2]]
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
 txt <- 30
-lwd <- 2
-lwd2 <- 1
+lwd <- 1.5
 
-colors <- c("First-year" = "#f7f7f7", "Non-breeder" = "#cccccc", "Breeder" = "#969696")
-
-ps <- ggplot(df.surv, aes(x = combined, y = Draws, group=combined )) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
+ps <- ggplot(df.surv2, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) + scale_fill_manual(values=colors) +
-  stat_summary(fun.data=data_summary85,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary95,  geom="pointrange", size=lwd2) +
+  geom_violin(aes(fill=State)) + scale_fill_manual(values=c("First-year"="#f7f7f7", "Non-breeder"="#cccccc", "Breeder"="#969696")) +
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +  
-  ylab("Survival \ndifference") + xlab ("") +
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) + 
-  facet_wrap(~State, scales="free")
-
-pt <- ggplot(df.trans, aes(x = combined, y = Draws, group=combined )) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5), limits = c(-0.8, 0.8)) +
+  ylab("Survival\ndifference") + xlab ("") + 
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) 
+  
+pt <- ggplot(df.rec2, aes(x = combined, y = Draws, group=combined )) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values= colors, drop=F) + 
-  stat_summary(fun.data=data_summary85,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary95,  geom="pointrange", size=lwd2) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("First-year"="#f7f7f7", "Non-breeder"="#cccccc", "Breeder"="#969696")) + 
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
-  ylab("Recruitment \ndifference") + xlab ("") + 
-  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" )) + 
-  facet_wrap(~State, scales="free")
+  ylab("Recruitment\ndifference") + xlab ("") + 
+  scale_x_discrete( labels=c("Hacked", "Sex", "Hacked", "Sex","Hacked", "Sex" ))
 
-pr <- ggplot(df.recap, aes(x = combined, y = Draws, group=combined)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5, 1),  labels=c(-0.5, 0, 0.5, 1), limits = c(-0.6, 1.0)) +
+pr <- ggplot(df.recap2, aes(x = combined, y = Draws, group=combined)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5),  labels=c(-0.5, 0, 0.5)) +
   geom_hline(yintercept=0, linetype="solid", size=lwd) +
-  geom_violin(aes(fill=State)) +  scale_fill_manual(values=colors[-1]) +
-  stat_summary(fun.data=data_summary85,  geom="pointrange", size=lwd) +
-  stat_summary(fun.data=data_summary95,  geom="pointrange", size=lwd2) +
+  geom_violin(aes(fill=State)) +  scale_fill_manual(values=c("First-year"="#f7f7f7",
+    "Non-breeder"="#cccccc", "Breeder"="#969696")) +
+  stat_summary(fun.data=data_summary,  geom="pointrange", size=lwd) +
   theme_classic() + theme (text = element_text(size=txt)) +
-  ylab("Resight \ndifference") + xlab ("") + 
-  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" )) + 
-  facet_wrap(~State, scales="free")
+  ylab("Resight\ndifference") + xlab ("") +
+  scale_x_discrete( labels=c("Effort", "Hacked", "Sex", "Effort", "Hacked", "Sex" ))
 
-
-grid.arrange(ps + theme(legend.position="none"), 
+grid.arrange(ps + theme(legend.position=c(0.5,0.95), legend.direction="horizontal",legend.background = element_rect(fill = "transparent")), 
              pt + theme(legend.position="none"), 
              pr + theme(legend.position="none"), 
              nrow=3,
@@ -582,64 +645,183 @@ grid.arrange(ps + theme(legend.position="none"),
                                    c(3, 3, 3, 3, 3, 3))) 
 ```
 
-![Fig. S6. Violin plots of differences in survival, recruitment, and recapture estimates from reduced covariate IPM without immigration. Differences were considered important when 95% highest density intervals did not intersect zero. Points without violin plots indicate no important differences from preliminary analyses when 95% HDIs did not intersect zero, and these covariates were excluded this analysis.](figs/SurvivalDiffs_IPM_Reduced.png)
+```{r ppipm2, eval=TRUE}
+########################
+# Plot mean estimates with 95% HDIs 
+#######################
+source("R\\HDIofMCMC.R")
+df4<- df3<- df2 <- df1 <- data.frame(param=NA , md=NA, lhdi85=NA, uhdi85=NA, lhdi95=NA, uhdi95=NA)
+# params with 1 estimate
+for (i in 1:3){
+ind <- c(17,18,21)[i]
+df1[i,1] <- names(out$sims.list)[ind]
+df1[i,2] <- median(out$sims.list[[ind]] )
+df1[i,3:4] <- HDIofMCMC(out$sims.list[[ind]], credMass=0.85)
+df1[i,5:6] <- HDIofMCMC(out$sims.list[[ind]])
+}
 
-# 3. Compare survival estimates from IPMs
+# params with 2 estimates
+ind <- 19
+df2[1,1] <- paste(names(out$sims.list)[ind], "_1", sep="")
+df2[1,2] <- median(out$sims.list[[ind]][,1] )
+df2[1,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.85)
+df2[1,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.95)
+df2[2,1] <- paste(names(out$sims.list)[ind], "_2", sep="")
+df2[2,2] <- median(out$sims.list[[ind]][,2] )
+df2[2,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.85)
+df2[2,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.95)
+ind <- 23
+df2[3,1] <- paste(names(out$sims.list)[ind], "_1", sep="")
+df2[3,2] <- median(out$sims.list[[ind]][,1] )
+df2[3,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.85)
+df2[3,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1], credMass=0.95)
+df2[4,1] <- paste(names(out$sims.list)[ind], "_2", sep="")
+df2[4,2] <- median(out$sims.list[[ind]][,2] )
+df2[4,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.85)
+df2[4,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2], credMass=0.95)
 
-```{r comp surv IPMs, fig.width=6, fig.height=4, fig.cap= "Fig. S6. Comparisons of survival estimates from an IPM that included immigration and an IPM that excluded immigration."}
-## ---- comp surv --------
-# load IPM results with immigration
-load(".\\outputs\\IPM_reduced_imm_fecfix_effort_reform.Rdata") 
-outi <- out
-# load IPM results without immigration
-load(".\\outputs\\IPM_reduced_no imm_fecfix_effort_reform_update.Rdata")
-library (MCMCvis)
-library (ggplot2)
-library(tidybayes)
-library (tidyr)
-# extract posteriors of IPMs-immigration 
-oji <- as.data.frame(outi$sims.list$JSalpha1) # first years, name slightly different due to older run, use OSalpha1
-ojil <- oji %>% pivot_longer(cols=c(1,2))
-ofi <- as.data.frame(outi$sims.list$FSalpha1) # first years, name slightly different due to older run, use ASalpha1
-obi <- as.data.frame(outi$sims.list$BSalpha1)
+ind <- c(16, 20, 22)[1]
+df4[1,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
+df4[1,2] <- median(out$sims.list[[ind]][,1,1] )
+df4[1,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
+df4[1,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.95)
+df4[2,1] <- paste(names(out$sims.list)[ind], "_2_1", sep="")
+df4[2,2] <- median(out$sims.list[[ind]][,2,1] )
+df4[2,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.85)
+df4[2,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.95)
+df4[3,1] <- paste(names(out$sims.list)[ind], "_1_2", sep="")
+df4[3,2] <- median(out$sims.list[[ind]][,1,2] )
+df4[3,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.85)
+df4[3,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.95)
+df4[4,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
+df4[4,2] <- median(out$sims.list[[ind]][,2,2] )
+df4[4,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
+df4[4,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
+ind <- c(16, 20, 22)[2]
+df4[5,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
+df4[5,2] <- median(out$sims.list[[ind]][,1,1] )
+df4[5,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
+df4[5,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.95)
+df4[6,1] <- paste(names(out$sims.list)[ind], "_2_1", sep="")
+df4[6,2] <- median(out$sims.list[[ind]][,2,1] )
+df4[6,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.85)
+df4[6,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.95)
+df4[7,1] <- paste(names(out$sims.list)[ind], "_1_2", sep="")
+df4[7,2] <- median(out$sims.list[[ind]][,1,2] )
+df4[7,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.85)
+df4[7,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.95)
+df4[8,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
+df4[8,2] <- median(out$sims.list[[ind]][,2,2] )
+df4[8,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
+df4[8,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
+ind <- c(16, 20, 22)[3]
+df4[9,1] <- paste(names(out$sims.list)[ind], "_1_1", sep="")
+df4[9,2] <- median(out$sims.list[[ind]][,1,1] )
+df4[9,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.85)
+df4[9,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,1], credMass=0.95)
+df4[10,1] <- paste(names(out$sims.list)[ind], "_2_1", sep="")
+df4[10,2] <- median(out$sims.list[[ind]][,2,1] )
+df4[10,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.85)
+df4[10,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,1], credMass=0.95)
+df4[11,1] <- paste(names(out$sims.list)[ind], "_1_2", sep="")
+df4[11,2] <- median(out$sims.list[[ind]][,1,2] )
+df4[11,3:4] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.85)
+df4[11,5:6] <- HDIofMCMC(out$sims.list[[ind]][,1,2], credMass=0.95)
+df4[12,1] <- paste(names(out$sims.list)[ind], "_2_2", sep="")
+df4[12,2] <- median(out$sims.list[[ind]][,2,2] )
+df4[12,3:4] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.85)
+df4[12,5:6] <- HDIofMCMC(out$sims.list[[ind]][,2,2], credMass=0.95)
 
-# extract posteriors of IPMS-no immigration 
-# thin posteriors so they have equal lengths
-keep <- seq(1, 27000, by=9)
-oj <- as.data.frame(out$sims.list$JSalpha1[keep, ]) # name difference see above
-ojl <- oj %>% pivot_longer(cols=c(1,2))
-of <- as.data.frame(out$sims.list$FSalpha1[keep]) # name difference see above
-ob <- as.data.frame(out$sims.list$BSalpha1[keep])
+df<- rbind(df1,df2,df4) 
+df<- df[c(8,9,10,11,1,2,4,5,12,13,14,15,3,16,17,18,19,6,7),]
 
-ojil <- oji %>% pivot_longer(cols=c(1,2))
-ojil$cat <- ifelse(ojil$name=="V1", "female", "male")
-ojl <- oj %>% pivot_longer(cols=c(1,2))
-ojl$cat <- ifelse(ojl$name=="V1", "female", "male")
-ofi$cat <- obi$cat <- of$cat <- ob$cat <- "all"
-obi$model <- ofi$model <- ojil$model <- "Immigration"
-ob$model <- of$model <- ojl$model <- "No immigration"
+df$parameter <- c(rep("Survival",6), rep("Recruitment",7), rep("Resight",6))
 
-ojil$stage <- paste("First-year", ojil$cat)
-ojl$stage <- paste("First-year", ojl$cat) 
-ofi$stage <- of$stage <- "Nonbreeder"
-obi$stage <- ob$stage <- "Breeder"
+df$lifestage <- c("First-year", "First-year","First-year", 
+"First-year", "Nonbreeder", "Breeder", 
+  "First-year to breeder", "First-year to breeder", "Nonbreeder to breeder" , "Nonbreeder to breeder" , "Nonbreeder to breeder" , "Nonbreeder to breeder" , "Breeder to nonbreeder",
+  "Nonbreeder", "Nonbreeder", "Nonbreeder", "Nonbreeder","Breeder", "Breeder")
 
-ojil <- ojil[,-1] 
-ojl <- ojl[,-1]
-colnames(ofi)[1] <- colnames(of)[1] <- 
-colnames(obi)[1] <- colnames(ob)[1] <- "value"
+df$she <- c("female, wild","male, wild",
+            "female, hacked","male, hacked",
+            "","",
+            "female", "male",
+            "female, wild","male, wild",
+            "female, hacked","male, hacked",
+            "",
+            "female, wild","male, wild",
+            "female, hacked","male, hacked",
+            "female", "male")
+df <- df[,c(7,8,9,2,5,6,3,4)]
+  
+df[,c(4:8)] <- format(round(df[,c(4:8)], digits=2), nsmall=2)
+# print estimates for survival, recruitment, and resight probabilities
+df
 
-df <- rbind(ojil, ojl, ofi, of, obi, ob)
-
-plt<- df %>%
-  ggplot(aes(x = value, y = model, colors=model)) +
-  stat_halfeye() +
-  facet_wrap(facets="stage", scales="free") +
-  theme_classic() +
-  ylab("Density") + xlab("Survival probability")
-plt
 ```
 
+# 3. Goodness-of-fit tests for the IPM
+```{r GOFprod, fig.width=6, fig.height=4, fig.cap= "Fig. S9. Goodness-of-fit tests for IPM.", fig.show="hold", out.width="100%"}
+load(".\\outputs\\ipm-e.Rdata")
+par(mfrow=c(2,3), oma=c(0,0,5,0))
+plot(out$sims.list$dd.obs, out$sims.list$dd.rep,
+     main="Poisson regression model\nfor Productivity",
+     ylab="Discrepancy replicate values",
+     xlab="Discrepancy observed values",
+     xlim=c(0,40), ylim=c(0,40),
+     pch=16, cex=0.1, col="gray10")
+curve(1*x, from=0, to=40, add=T, lty=2, lwd=2, col="blue")
+bp <- round(mean(out$sims.list$dd.rep > out$sims.list$dd.obs),2)
+loc <- ifelse(bp < 0.5, "topleft", "bottomright")
+legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
+
+hist(out$sims.list$tvm.rep, nclass=50,
+     xlab="variance/mean ", main=NA, axes=FALSE)
+abline(v=out$mean$tvm.obs, col="red")
+axis(1); axis(2)
+```
+
+```{r GOFb, fig.width=6, fig.height=4, fig.cap= "Fig. S10. Goodness-of-fit tests for breeder counts in the IPM."}
+plot(jitter(out$sims.list$dmape.obs[,1], amount=300), 
+     jitter(out$sims.list$dmape.rep[,1], amount=300),
+     main="State-space model\n for Breeder counts",
+     ylab="Discrepancy replicate values",
+     xlab="Discrepancy observed values", 
+     xlim=c(0,8000), ylim=c(0,8000), 
+     pch=16, cex=0.1, col="gray10")
+curve(1*x, from=0, to=8000, add=T, lty=2, lwd=2, col="blue")
+bp <- round(mean(out$sims.list$dmape.rep[,1] > out$sims.list$dmape.obs[,1]),2)
+loc <- ifelse(bp < 0.5, "topleft", "bottomright")
+legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
+```
+
+```{r GOFnb, fig.width=6, fig.height=4, fig.cap= "Fig. S11. Goodness-of-fit tests for non-breeder counts in the IPM."}
+plot(jitter(out$sims.list$dmape.obs[,2], amount=300), 
+     jitter(out$sims.list$dmape.rep[,2], amount=300),
+     main="State-space model\n for non-breeder counts",
+     ylab="Discrepancy replicate values",
+     xlab="Discrepancy observed values", 
+     xlim=c(0,15000), ylim=c(0,15000), 
+     pch=16, cex=0.1, col="gray10")
+curve(1*x, from=0, to=30000, add=T, lty=2, lwd=2, col="blue")
+bp <- round(mean(out$sims.list$dmape.rep[,2] > out$sims.list$dmape.obs[,2]),2)
+loc <- ifelse(bp < 0.5, "topleft", "bottomright")
+legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
+```
+
+```{r GOFfy, fig.width=6, fig.height=4, fig.cap= "Fig. S12. Goodness-of-fit tests for first-year counts in the IPM."}
+plot(jitter(out$sims.list$dmape.obs[,3], amount=200), 
+     jitter(out$sims.list$dmape.rep[,3], amount=200),
+     main="State-space model\n for first-year counts",
+     ylab="Discrepancy replicate values",
+     xlab="Discrepancy observed values", 
+     xlim=c(0,12000), ylim=c(0,12000),
+     pch=16, cex=0.1, col="gray10")
+curve(1*x, from=0, to=15000, add=T, lty=2, lwd=2, col="blue")
+bp <- round(mean(out$sims.list$dmape.rep[,3] > out$sims.list$dmape.obs[,3]),2)
+loc <- ifelse(bp < 0.5, "topleft", "bottomright")
+legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
+```
 
 # 4. Literature cited  
 
