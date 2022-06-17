@@ -2,6 +2,8 @@
  
 Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2022. Long-term Demography of a Reintroduced and Isolated Population of Endangered Falcons. Global Ecology and Conservation.
  
+ Contact author: brianrolek at gmail.com.
+ 
 Metadata associated with the file "data\data-7states.Rdata". Once loaded into R, this file contains the object "datl", a list containing data for input into the JAGS model. Data fields include: 
 
 + y = observed states. 1 = seen first year (age 0), 2 = seen nonbreeder, 3 = seen breeder, 4 = recovered dead, 5 = not seen. These are recoded in IPM code to exclude recovered dead state. 
