@@ -1,0 +1,22 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  The-Peregrine-Fund/Aplomado-Falcon-IPM: Aplomado
+  Falcon Integrated Population Model V1.0.0
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Brian
+    family-names: Rolek
+    email: brianrolek@gmail.com
+    affiliation: The Peregrine Fund
+    orcid: 'https://orcid.org/0000-0002-0267-803X'
+  - given-names: Christopher
+    family-names: McClure
+    email: cmcclure@peregrinefund.org
+    affiliation: The Peregrine Fund
+    orcid: 'https://orcid.org/0000-0003-1216-7425'
