@@ -254,7 +254,7 @@ cat("
     Ntot[t] <- sum(N[c(1,2,3,4,5,6,7,8,9,10,11,12,13),t]) + aug[t] - sum(N[c(14,15,16,17),t]) # total number
     NB[t] <-  sum(N[c(4,5,7,9,11,12),t]) - N[14,t] # number of breeders
     NF[t] <-  sum(N[c(2,3,6,8,10,13),t]) - N[15,t] # number of nonbreeders
-    NO[t] <-  N[1,t] + aug[t] - N[16,t] - N[17,t]# number of total first years and translocated first years
+    NO[t] <-  N[1,t] + aug[t] - N[16,t] - N[17,t]# number of total first years. Includes translocated first years
     NW[t] <-  N[1,t] - N[16,t] # Number of wild born 
     NH[t] <- aug[t] - N[17,t] # Number of hacked 
     NI[t] <- sum(N[c(12,13),t]) # number of immigrants

@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Brian W. Rolek"
-date: "15 June 2022"
+date: "17 June 2022"
 output:
   html_document:
     df_print: paged
@@ -48,7 +48,7 @@ We used the preliminary CJS model that included all explanatory variables to est
 
 We estimated emigration from an integrated population model by using mark-resight-dead recovery data (p. 241, Kéry and Schaub 2012). We did not have explicit data on immigration; however, IPMs can estimate a latent vital rate when all other vital rates were measured empirically (Kéry and Schaub 2012); therefore, we used a model-based method to estimate the number of immigrants ($N^I$, denoted with superscript I) and an immigration rate ($ω$, Abadi et al. 2010) of adults (non-breeders and breeders). First-years must be recruited as either breeders or non-breeders during the following post-breeding survey; therefore, we did not include immigration of first-years. We constructed an identical IPM to the one described below (see Integrated Population Model), except that we included an immigration rate parameter. We used this preliminary IPM analysis to assess whether inclusion of immigration rates could bias estimation of vital rates (Schaub and Fletcher 2015), and excluded immigration rates if they were negligible (median immigration rate ≤ 0.01), and when density plots of posterior distributions of survival did not visually differ. 
 
-Including latent immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015; Paquet et al. 2021) because immigration rates were constrained to positive values. Therefore, we explicitly tested whether immigration may be contributing to this population to determine whether to include it in final analyses.
+Including latent immigration rates in IPMs when populations are isolated could bias estimates (Schaub and Fletcher 2015; Paquet et al. 2021) because immigration rates were constrained to positive values. Therefore, we excluded immigration from final analyses if estimates were too imprecise or biologically implausible.
 
 ## 1.3 Formulation of Multi-state Cormack-Jolly-Seber (CJS) Model with Emigration
 The formulation of the CJS model with emigration is included in the Methods section of the manuscript. We review the basic structure here.
@@ -85,8 +85,8 @@ $$PO=
 $$
 We assume perfect resight probability (1.0 at row 1 and column 1) because these birds must be captured during their first observation. 
 
-### 1.3.2 State Transition Matrix  
-Next, we specified the state transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-years at time t and column 1 corresponds with first-years at time t+1. Here, $r$ is the recapture probability of a recently dead bird and $\delta$ is the probability of emigration. 
+### 1.3.2 State-Transition Matrix  
+Next, we specified the state-transition matrix ($\Omega$) that governs dynamics between true states over time. Rows of the matrix represent true states during time step ($t$), and columns represent true states during the following time step ($t+1$). Each row and column number correspond to true states listed above. For example, row 1 corresponds with first-years at time t and column 1 corresponds with first-years at time t+1. Here, $r$ is the recapture probability of a recently dead bird and $\delta$ is the probability of emigration. 
 
 $$ \Omega=
 \begin{bmatrix} 
