@@ -1,5 +1,7 @@
 # Aplomado-Falcon-IPM
- 
+
+[![DOI](https://zenodo.org/badge/291721348.svg)](https://zenodo.org/badge/latestdoi/291721348)
+
 Supplemental materials for: B. W. Rolek, B. Pauli, A. Macias-Duarte, B. Mutch, P. Juergens, T. Anderson, C. Parish, J. Johnson, B. Millsap, C. J. W. McClure. 2022. Long-term Demography of a Reintroduced and Isolated Population of Endangered Falcons. Global Ecology and Conservation.
  
  Contact author: brianrolek at gmail.com.
