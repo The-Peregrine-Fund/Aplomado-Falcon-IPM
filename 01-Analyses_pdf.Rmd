@@ -4,11 +4,12 @@ knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
  encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+ output_file=file.path(dirname(input_file), out_dir, 'index.pdf'))})
 author: "Brian W. Rolek"
 date: "12 July 2022"
 output:
-  html_document:
+  pdf_document:
+    latex_engine: xelatex
     df_print: paged
     toc: yes
   github_document:
@@ -835,4 +836,4 @@ Paquet, M., J. Knape, D. Arlt, P. Forslund, T. Pärt, Ø. Flagstad, C. G. Jones,
 
 Royle, J. A. 2008. Modeling Individual Effects in the Cormack–Jolly–Seber Model: A State–Space Formulation. Biometrics 64:364–370.
 
-Schaub, M., and D. Fletcher. 2015. Estimating immigration using a Bayesian integrated population model: choice of parametrization and priors. Environmental and Ecological Statistics 22:535–549.
+Schaub, M., and D. Fletcher. 2015. Estimating immigration using a Bayesian integrated population model: choice of parameterization and priors. Environmental and Ecological Statistics 22:535–549.

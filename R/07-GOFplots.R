@@ -1,19 +1,12 @@
 # Goodness-of-fit
 library (jagsUI)
 
-load("outputs\\ipm-jags-noimm-GOF-pois-excludetransl.Rdata")
-mod <- "no immigration P"
-load("outputs\\ipm-jags-noimm-GOF-pois-zip.Rdata")
-mod <- "no immigration ZIP"
-load("outputs\\ipm-jags-imm-GOF-pois-excludetransl.Rdata")
-mod <- "immigration P"
-load("outputs\\ipm-jags-imm-GOF-pois-zip.Rdata")
-mod <- "immigration ZIP"
-
 load("C:\\Users\\rolek.brian\\Documents\\GitHub\\Aplomado-Falcon-IPM\\outputs\\ipm-e.Rdata")
+mod <- "no imm"
 load("C:\\Users\\rolek.brian\\Documents\\GitHub\\Aplomado-Falcon-IPM\\outputs\\ipm-ie.Rdata")
+mod <- "immigration"
 
-
+windows()
 par(mfrow=c(2,3), oma=c(0,0,5,0))
 plot(out$sims.list$dd.obs, out$sims.list$dd.rep,
      main="Poisson regression model\nfor Productivity",

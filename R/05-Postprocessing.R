@@ -155,7 +155,7 @@ txt <- 30
 lwd <- 2
 lwd2 <- 1
 colors <- c("Survival" = "#f7f7f7", "Recruitment" = "#cccccc", "Resight" = "#969696")
-colors <- c("First-year" = "#f7f7f7", "Non-breeder" = "#cccccc", "Breeder" = "#969696")
+colors <- c("First-year" = "#7fc97f", "Non-breeder" = "#beaed4", "Breeder" = "#fdc086")
 f_labels <- data.frame(Parameter=c("Survival", "Recruitment", "Resight"),
                       label=c("Greater wild-hatched \nand females", "", ""))
 pall <- ggplot(df.all, aes(x = combined, y = Draws)) +
