@@ -22,6 +22,10 @@ Metadata associated with the file "data\data-7states.Rdata". Once loaded into R,
 +	countFM = counts of adult nonbreeder males each year. A vector of length n.yr.
 +	countJM = counts of first-year males each year. A vector of length n.yr.
 +	countOM = counts of wild-hatched first-year males each year. A vector of length n.yr.
++	countBF = counts of adult breeder females each year. A vector of length n.yr.
++	countFF = counts of adult nonbreeder females each year. A vector of length n.yr.
++	countJF = counts of first-year females each year. A vector of length n.yr.
++	countOF = counts of wild-hatched first-year females each year. A vector of length n.yr.
 +	aug = the number of first-year captive-bred birds translocated for each year.  A vector of length n.yr.
 +	manage = an index for each year indicating whether improvements to nest boxes or habitat had occurred. 1 = pre-management <2012, 2= post-management >=2012.  A vector of length n.yr. 
 +	prod = productivity for each spatial territory and breeding pair. A vector of length "number of nests monitored".
